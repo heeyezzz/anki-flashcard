@@ -1,0 +1,152 @@
+# anki-context · 不规则变化表（仅用于难度校验，减轻误报）
+#
+# 作用：CEFR 词表收录的是原形，而例句里常用不规则过去式/过去分词（made、found、meant…）。
+#       这里的词形一律视为 A2 以内，避免把明显的 A2 词报成"超出 A2"。
+# 格式：每行一个词形；# 开头是注释；每组的注释里写明原形，便于核对与维护。
+#
+# 用法：不要把它当成"难度豁免"通道——只放不规则变化形，普通词形交给 CEFR 词表。
+
+# be / have / do / go
+been
+was
+were
+had
+did
+done
+went
+gone
+
+# make / take / see / come / get
+made
+took
+taken
+saw
+seen
+came
+got
+gotten
+
+# know / give / find / think / tell
+knew
+known
+gave
+given
+found
+thought
+told
+
+# become / show / leave / feel / put
+became
+shown
+showed
+left
+felt
+put
+
+# bring / begin / keep / hold / write
+brought
+began
+begun
+kept
+held
+wrote
+written
+
+# stand / hear / let / mean / set
+stood
+heard
+let
+meant
+set
+
+# meet / run / pay / sit / speak
+met
+ran
+run
+paid
+sat
+spoke
+spoken
+
+# lie / lead / read / grow / lose
+lay
+led
+read
+grew
+grown
+lost
+
+# fall / send / build / understand / draw
+fell
+fallen
+sent
+built
+understood
+drew
+drawn
+
+# break / spend / cut / rise / drive
+broke
+broken
+spent
+cut
+rose
+risen
+drove
+driven
+
+# buy / wear / choose / throw / catch
+bought
+wore
+worn
+chose
+chosen
+threw
+thrown
+caught
+
+# deal / fight / teach / win / sell
+dealt
+fought
+taught
+won
+sold
+
+# forget / sleep / swim / fly / ride
+forgot
+forgotten
+slept
+swam
+swum
+flew
+flown
+rode
+ridden
+
+# drink / eat / sing / sit / wake
+drank
+drunk
+ate
+eaten
+sang
+sung
+woke
+woken
+
+# put / hit / hurt / cost / shut / spread / quit
+hit
+hurt
+cost
+shut
+spread
+quit
+
+# 常见不规则复数
+children
+men
+women
+people
+feet
+teeth
+mice
+geese

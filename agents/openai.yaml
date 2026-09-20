@@ -1,0 +1,3 @@
+interface:
+  display_name: "Anki Context Importer"
+  short_description: "Safely import complete 微语境闪卡 vocabulary cards"
