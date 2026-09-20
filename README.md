@@ -100,6 +100,19 @@ tests/acceptance.sh           验收套件（37 项）
 - **代码**：MIT（见 [LICENSE](LICENSE)）。
 - **`assets/cefr-j-words.tsv`**：数据来自 [Maximax67/Words-CEFR-Dataset](https://github.com/Maximax67/Words-CEFR-Dataset)（整合 CEFR-J Wordlist 与 Octanove Vocabulary Profile，后者以 **CC-BY-SA 4.0** 发布）。该数据文件按 **CC-BY-SA 4.0** 使用，仅用于例句难度校验；如需商用或再分发，请自行核对上游许可或替换为你自己的词表（`scripts/level-check.mjs` 只要求同格式的 `<词形>\t<等级>` TSV）。
 
+## 发布更新（维护本仓库）
+
+这个目录同时是你的 Hermes skill 和这个 Git 仓库。改完 skill 后：
+
+```sh
+cd ~/.hermes/skills/education/anki-context
+git add -A && git commit -m "描述这次改动"
+GH_CONFIG_DIR=~/.hermes/gh-config git push
+```
+
+> 那台机器上 `~/.config` 的属主是 root，`gh` 建不了自己的配置目录，所以用 `GH_CONFIG_DIR` 指到可写位置。
+> 想一劳永逸：`sudo chown -R $(whoami) ~/.config`，之后直接 `git push` 即可。
+
 ## 相关技能
 
 - [`anki-card-template-design`](https://github.com/heeyezzz/anki-card-template-design)：卡片模板 / CSS 的安全改法与离线渲染验证。
