@@ -47,14 +47,14 @@ node "$SKILL_DIR/scripts/import-vocabulary.mjs" /abs/path/notes.json --confirmed
   --minimax-voice "English_Steady_Female_1"
 
 # 2) 重做已有卡（改例句、换难度规则；内容 + 语音一起换，保留复习排程）
-node "$SKILL_DIR/scripts/rewrite-existing.mjs" /abs/path/rewrite.json --deck "测试::微语境闪卡" --dry-run
-node "$SKILL_DIR/scripts/rewrite-existing.mjs" /abs/path/rewrite.json --deck "测试::微语境闪卡" --confirmed
+node "$SKILL_DIR/scripts/rewrite-existing.mjs" /abs/path/rewrite.json --deck "all in one::微语境闪卡" --dry-run
+node "$SKILL_DIR/scripts/rewrite-existing.mjs" /abs/path/rewrite.json --deck "all in one::微语境闪卡" --confirmed
 
 # 3) 给已有卡片补/重录语音
-node "$SKILL_DIR/scripts/add-audio-to-existing.mjs" --deck "测试::微语境闪卡" --refresh --dry-run
+node "$SKILL_DIR/scripts/add-audio-to-existing.mjs" --deck "all in one::微语境闪卡" --refresh --dry-run
 
 # 4) 独立验收（只读）
-node "$SKILL_DIR/scripts/verify-import.mjs" --deck "测试::微语境闪卡"
+node "$SKILL_DIR/scripts/verify-import.mjs" --deck "all in one::微语境闪卡"
 
 # 5) 验收套件（37 项，只写自己的夹具牌组）
 bash "$SKILL_DIR/tests/acceptance.sh"

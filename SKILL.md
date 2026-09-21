@@ -112,7 +112,7 @@ generated again rather than reused.
 To voice notes already in a deck:
 
 ```sh
-node "$SKILL_DIR/scripts/add-audio-to-existing.mjs" --deck "测试::微语境闪卡" --minimax-voice "English_Steady_Female_1" --dry-run
+node "$SKILL_DIR/scripts/add-audio-to-existing.mjs" --deck "all in one::微语境闪卡" --minimax-voice "English_Steady_Female_1" --dry-run
 ```
 
 It fills the audio fields of notes whose audio is empty, verifies afterwards that every stored
@@ -130,8 +130,8 @@ Do not trust the script's own summary alone. `scripts/verify-import.mjs` re-chec
 `--word`) straight from AnkiConnect:
 
 ```sh
-node "$SKILL_DIR/scripts/verify-import.mjs" --deck "测试::微语境闪卡"
-node "$SKILL_DIR/scripts/verify-import.mjs" --deck "测试::微语境闪卡" --word incur
+node "$SKILL_DIR/scripts/verify-import.mjs" --deck "all in one::微语境闪卡"
+node "$SKILL_DIR/scripts/verify-import.mjs" --deck "all in one::微语境闪卡" --word incur
 ```
 
 Per note it checks:
@@ -167,8 +167,8 @@ put. Write the new content in the same JSON schema as an import (only the fields
 then:
 
 ```sh
-node "$SKILL_DIR/scripts/rewrite-existing.mjs" /absolute/path/rewrite.json --deck "测试::微语境闪卡" --dry-run
-node "$SKILL_DIR/scripts/rewrite-existing.mjs" /absolute/path/rewrite.json --deck "测试::微语境闪卡" --confirmed --minimax-voice "English_Steady_Female_1"
+node "$SKILL_DIR/scripts/rewrite-existing.mjs" /absolute/path/rewrite.json --deck "all in one::微语境闪卡" --dry-run
+node "$SKILL_DIR/scripts/rewrite-existing.mjs" /absolute/path/rewrite.json --deck "all in one::微语境闪卡" --confirmed --minimax-voice "English_Steady_Female_1"
 ```
 
 - It matches notes by `Word` **inside `--deck` only**, and refuses a word that is not there: this

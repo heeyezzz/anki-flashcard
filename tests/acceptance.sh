@@ -36,7 +36,7 @@ import json, sys, pathlib
 T = pathlib.Path(sys.argv[1])
 base = {
   "modelName": "微语境闪卡 1.0",
-  "deckName": "测试::微语境闪卡",
+  "deckName": "all in one::微语境闪卡",
   "notes": [{
     "Word": "waive", "IPA": "/weɪv/", "ChineseCore": "v. 免除，放弃（费用、权利）", "Theme": "bauhaus",
     "OtherMeanings": "waive a requirement：免除某项要求；名词形式 waiver。",
@@ -75,7 +75,7 @@ variant("duplicate_word", lambda n: n.update(Word="allocate", Sentence1="Please 
 # A2-clean note: every word except the target is A1/A2, so --strict-level must accept it.
 (T/"ok_a2.json").write_text(json.dumps({
   "modelName": "微语境闪卡 1.0",
-  "deckName": "测试::微语境闪卡",
+  "deckName": "all in one::微语境闪卡",
   "notes": [{
     "Word": "borrow", "IPA": "/ˈbɒroʊ/", "ChineseCore": "v. 借，借用（东西、钱）", "Theme": "bauhaus",
     "Sentence1": "Can I borrow your pen for a minute?",

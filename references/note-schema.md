@@ -5,7 +5,7 @@ Top-level JSON:
 ```json
 {
   "modelName": "微语境闪卡 1.0",
-  "deckName": "测试::微语境闪卡",
+  "deckName": "all in one::微语境闪卡",
   "tags": ["微语境"],
   "notes": [{ "Word": "..." }]
 }

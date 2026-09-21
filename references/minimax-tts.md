@@ -30,7 +30,7 @@ node "$SKILL_DIR/scripts/import-vocabulary.mjs" /absolute/path/to/notes.json \
   --confirmed --minimax-model "speech-2.8-hd" --minimax-speed 1
 
 node "$SKILL_DIR/scripts/add-audio-to-existing.mjs" \
-  --deck "测试::微语境闪卡" --word "exempt" --minimax-voice "English_Steady_Female_1" --dry-run
+  --deck "all in one::微语境闪卡" --word "exempt" --minimax-voice "English_Steady_Female_1" --dry-run
 ```
 
 TTS is on by default. The default model is `speech-2.8-hd`, speed `1`, and a conservative 11-second
