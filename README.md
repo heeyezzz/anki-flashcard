@@ -25,7 +25,7 @@ git clone https://github.com/heeyezzz/anki-context.git \
 
 | 依赖 | 说明 |
 |---|---|
-| Anki + AnkiConnect | 运行中的 Anki，AnkiConnect 监听 `127.0.0.1:8765` |
+| Anki + Agent Connect | 运行中的 Anki；Agent Connect（AnkiConnect Plus，兼容原版 AnkiConnect）监听 `127.0.0.1:8766`；原版 AnkiConnect 在 `8765`，用 `ANKI_CONNECT_URL` 切换。`verify-import.mjs` 依赖 Plus 独有的 `renderCard` |
 | Node.js ≥ 18 | 脚本无第三方依赖，只用标准库 |
 | MiniMax API Key | 按顺序查找：环境变量 `MINIMAX_API_KEY` → macOS Keychain 项 `anki-minimax-tts` → 本地 `.env` |
 | 笔记类型 `微语境闪卡 1.0` | 已存在于你的 Anki 中（本技能不修改模板/样式） |

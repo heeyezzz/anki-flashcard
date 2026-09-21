@@ -3,7 +3,7 @@
  * anki-context — read-only audit of the audio fields the 微语境闪卡 templates play.
  * Repairs them only with --apply, and only after the user has authorized changing the note type.
  */
-const API_URL = process.env.ANKI_CONNECT_URL || "http://127.0.0.1:8765";
+const API_URL = process.env.ANKI_CONNECT_URL || "http://127.0.0.1:8766";
 const MODEL_NAME = process.env.ANKI_CONTEXT_MODEL || "微语境闪卡 1.0";
 // The templates read raw filenames from WordAudio and AudioSentence1..5.
 // AudioWordAuto / AudioMediaRefs are intentionally NOT required here: this note type plays audio

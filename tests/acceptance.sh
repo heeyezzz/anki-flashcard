@@ -157,7 +157,7 @@ cat > "$FIXTURE_JSON" <<'JSON'
   }]
 }
 JSON
-curl -s -X POST "${ANKI_CONNECT_URL:-http://127.0.0.1:8765}" -d "{\"action\":\"createDeck\",\"version\":6,\"params\":{\"deck\":\"$FIXTURE_DECK\"}}" >/dev/null
+curl -s -X POST "${ANKI_CONNECT_URL:-http://127.0.0.1:8766}" -d "{\"action\":\"createDeck\",\"version\":6,\"params\":{\"deck\":\"$FIXTURE_DECK\"}}" >/dev/null
 if node "$S/scripts/verify-import.mjs" --deck "$FIXTURE_DECK" --word "incur" >/dev/null 2>&1; then
   echo "PASS  夹具卡已就位（复用）"; pass=$((pass+1))
 elif node "$S/scripts/import-vocabulary.mjs" "$FIXTURE_JSON" --confirmed >/dev/null 2>&1; then
@@ -173,7 +173,7 @@ import json, sys, urllib.request
 deck = sys.argv[1]
 def call(action, params):
     request = urllib.request.Request(
-        "http://127.0.0.1:8765",
+        "http://127.0.0.1:8766",
         data=json.dumps({"action": action, "version": 6, "params": params}).encode(),
         headers={"Content-Type": "application/json"})
     return json.load(urllib.request.urlopen(request))["result"]
@@ -195,7 +195,7 @@ import json, sys, urllib.request
 deck, out = sys.argv[1], sys.argv[2]
 def call(action, params):
     request = urllib.request.Request(
-        "http://127.0.0.1:8765",
+        "http://127.0.0.1:8766",
         data=json.dumps({"action": action, "version": 6, "params": params}).encode(),
         headers={"Content-Type": "application/json"})
     return json.load(urllib.request.urlopen(request))["result"]

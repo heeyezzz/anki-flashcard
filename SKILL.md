@@ -79,8 +79,9 @@ node "$SKILL_DIR/scripts/import-vocabulary.mjs" /absolute/path/to/notes.json --d
 node "$SKILL_DIR/scripts/import-vocabulary.mjs" /absolute/path/to/notes.json --confirmed --minimax-voice "English_Steady_Female_1"
 ```
 
-AnkiConnect defaults to `http://127.0.0.1:8765`; override it with `ANKI_CONNECT_URL` or
-`--anki-connect-url`. The note type defaults to `微语境闪卡 1.0`; set `modelName` in the JSON, or
+The endpoint defaults to Agent Connect at `http://127.0.0.1:8766`; override it with `ANKI_CONNECT_URL`
+or `--anki-connect-url` (the original AnkiConnect speaks the same API on `8765`; this skill additionally
+uses the Agent Connect-only `renderCard` action in `verify-import.mjs`). The note type defaults to `微语境闪卡 1.0`; set `modelName` in the JSON, or
 `ANKI_CONTEXT_MODEL`, when the same template is installed under another name. The script requires the
 existing model and deck and never creates or edits either. It validates 3–5 consecutive context
 groups, rejects markup and sentences the template cannot highlight, rejects words already present in
@@ -119,7 +120,8 @@ It fills the audio fields of notes whose audio is empty, verifies afterwards tha
 filename really exists in the media collection, and leaves notes that already have audio alone —
 `--refresh` is required to replace audio whose filename no longer matches the current sentence text.
 
-If AnkiConnect is unavailable, stop and ask the user to open Anki with AnkiConnect enabled. Never add
+If the endpoint is unavailable, stop and ask the user to open Anki with Agent Connect (or AnkiConnect)
+enabled. Never add
 a fallback that writes collection files directly, and never expose an AnkiConnect endpoint publicly to
 make a remote agent work.
 
@@ -146,18 +148,29 @@ Per note it checks:
    the `Analysis`. A front template that renders an answer field is the one mistake that ruins the
    card silently.
 
-To show the user how the card really renders, wrap the `question` / `answer` HTML from `cardsInfo` in
-`<html><head><meta charset="utf-8"></head><body class="card">…</body></html>` and screenshot it in
-headless Chromium: that HTML already carries the note type's CSS, so the result is the real card. The
+To show the user how the card really renders, call Agent Connect's `renderCard` with `format='html'`
+and screenshot it in headless Chromium: wrap the returned `question` / `answer` (each card carries the
+note type's `css`) in
+`<html><head><meta charset="utf-8"></head><body class="card">…</body></html>`, so the result is the
+real card. The
 front's shuffle bag picks a sentence with `Math.random`, so seed `localStorage`
 (`mctx:<word>:<valid-slots>:pool`, e.g. `[1]`) in the head to pin a specific sentence for the shot.
 
-Two traps in the leak check, both hit in practice: the question payload embeds the whole stylesheet,
-so strip `<style>` and `<script>` before scanning for answer text (the CSS comments name the answer
-fields and produce false positives), and compare **full** field values — an `Analysis` line normally
+`verify-import.mjs` checks the rendered question through `renderCard` with `format='text'` — visible
+text only, so the stylesheet (whose CSS comments name the answer fields) can never produce a false
+positive. If you ever do a leak check against `format='html'` output by hand, strip `<style>` and
+`<script>` blocks first, and always compare **full** field values — an `Analysis` line normally
 quotes the collocation that is already visible in the sentence. Also note the front DOM contains
 every `Sentence{i}` slot and reveals one with JS, so "which sentence is showing" can only be checked
 visually, never by counting strings in the HTML.
+
+### Auto-sync after import (standing instruction)
+
+Once the import succeeds and `verify-import.mjs` passes, sync to AnkiWeb **without asking again** — the
+user authorized this on 2026-09-21. Call Agent Connect's `syncNow`, then poll `syncStatus` until
+`job.state` returns to `idle`, and report the final `required` value. A job error or a `required` that
+is still `normal_sync` must be surfaced, not reported as synced. The original AnkiConnect has no sync
+actions; there, ask the user to press the sync button instead.
 
 ## Rewriting cards that already exist
 

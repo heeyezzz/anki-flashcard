@@ -24,7 +24,7 @@ import {
 } from "./note-rules.mjs";
 export { contextWordPattern } from "./note-rules.mjs";
 
-const DEFAULT_API_URL = "http://127.0.0.1:8765";
+const DEFAULT_API_URL = "http://127.0.0.1:8766";
 const DEFAULT_MODEL_NAME = process.env.ANKI_CONTEXT_MODEL || "微语境闪卡 1.0";
 const DEFAULT_TAG = "微语境";
 

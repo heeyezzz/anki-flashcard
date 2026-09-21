@@ -9,15 +9,16 @@
  *   4. exactly one card per note;
  *   5. the question side renders the word, the IPA and the sentences — and no answer.
  *
- * The answer check strips <style> and <script> first: the question payload embeds the whole
- * stylesheet, whose comments name the answer fields, and compares full field values, because a
- * partial match (an Analysis line quoting the collocation already in the sentence) is expected.
+ * The rendered checks use Agent Connect's renderCard (format="text"), which runs the card through
+ * Anki's own template pipeline and returns visible text only — no stylesheet or script payload to
+ * strip, so answer-field names in CSS comments cannot produce false positives. Field comparisons use
+ * full values, because an Analysis line legitimately quotes a collocation already in the sentence.
  *
  * usage: node verify-import.mjs --deck DECK_NAME [--word WORD] [--anki-connect-url URL]
  */
 import { findAboveLevel, loadCefrList, targetFormsOf } from "./level-check.mjs";
 
-const API_URL = process.env.ANKI_CONNECT_URL || "http://127.0.0.1:8765";
+const API_URL = process.env.ANKI_CONNECT_URL || "http://127.0.0.1:8766";
 const MODEL_NAME = process.env.ANKI_CONTEXT_MODEL || "微语境闪卡 1.0";
 const usage = "Usage: node verify-import.mjs --deck DECK_NAME [--word WORD] [--fail-on-level] [--anki-connect-url URL]";
 const options = process.argv.slice(2);
@@ -123,7 +124,7 @@ for (const note of notes) {
   if (config.failOnLevel && levelIssues.length) problems.push(`above A2: ${levelIssues.join("; ")}`);
 
   if (note.cards.length !== 1) problems.push(`expected exactly one card, found ${note.cards.length}`);
-  const card = note.cards.length ? (await invoke("cardsInfo", { cards: [note.cards[0]] }))[0] : null;
+  const card = note.cards.length ? (await invoke("renderCard", { cardIds: [note.cards[0]], format: "text" })).cards[0] : null;
   if (card) {
     const text = renderedText(card.question);
     const answers = { ChineseCore: fields.ChineseCore, OtherMeanings: fields.OtherMeanings };
@@ -136,9 +137,9 @@ for (const note of notes) {
     if (leaks.length) problems.push(`answer visible on the question side: ${leaks.join(", ")}`);
     if (!text.includes(word)) problems.push("word is not rendered on the question side");
     if (fields.IPA && !text.includes(fields.IPA)) problems.push("IPA is not rendered on the question side");
-    if (fields.WordAudio && !card.question.includes(fields.WordAudio)) problems.push("word audio path is not in the question DOM");
+    if (fields.WordAudio && !text.includes(fields.WordAudio)) problems.push("word audio path is not in the question DOM");
     for (const index of slots) {
-      if (!card.question.includes(fields[`Sentence${index}`])) problems.push(`Sentence${index} is not in the question DOM`);
+      if (!text.includes(fields[`Sentence${index}`])) problems.push(`Sentence${index} is not in the question DOM`);
     }
   }
 
