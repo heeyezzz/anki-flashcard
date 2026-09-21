@@ -1,5 +1,5 @@
 /**
- * anki-context — the 微语境闪卡 1.0 content rules, shared by the importer and the rewriter.
+ * anki-flashcard — the 微语境闪卡 1.0 content rules, shared by the importer and the rewriter.
  *
  * validateNote() is the single place that decides whether a generated card is acceptable:
  * required fields, 3–5 consecutive context groups, plain text (no cloze/HTML/sound tags), the target

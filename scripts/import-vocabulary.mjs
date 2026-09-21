@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * anki-context — import complete 微语境闪卡 1.0 notes into Anki through AnkiConnect.
+ * anki-flashcard — import complete 微语境闪卡 1.0 notes into Anki through AnkiConnect.
  *
  * Contract with the note type (see references/note-schema.md):
  *   Word, IPA, ChineseCore                      — required, one per note
@@ -25,7 +25,7 @@ import {
 export { contextWordPattern } from "./note-rules.mjs";
 
 const DEFAULT_API_URL = "http://127.0.0.1:8766";
-const DEFAULT_MODEL_NAME = process.env.ANKI_CONTEXT_MODEL || "微语境闪卡 1.0";
+const DEFAULT_MODEL_NAME = process.env.ANKI_FLASHCARD_MODEL || "微语境闪卡 1.0";
 const DEFAULT_TAG = "微语境";
 
 const usage = "Usage: node import-vocabulary.mjs /absolute/path/to/notes.json [--dry-run] [--confirmed] [--without-tts] [--strict-level] [--no-level-check] [--anki-connect-url URL] [--tts minimax --minimax-voice VOICE_ID] [--minimax-model MODEL] [--minimax-speed NUMBER] [--minimax-min-interval-ms NUMBER] [--minimax-api-key-env NAME] [--minimax-keychain-service NAME] [--minimax-env-file PATH] [--minimax-endpoint URL] [--media-prefix PREFIX]";

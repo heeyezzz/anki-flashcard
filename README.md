@@ -1,4 +1,4 @@
-# anki-context · 微语境闪卡制卡技能
+# anki-flashcard · 微语境闪卡制卡技能
 
 把生词变成 Anki 里一张张**带语音、带中文解释、且除目标词以外你全都看得懂**的卡片——同时不弄乱已有的卡片和复习进度。
 
@@ -15,8 +15,8 @@
 ## 安装
 
 ```sh
-git clone https://github.com/heeyezzz/anki-context.git \
-  ~/.hermes/skills/education/anki-context
+git clone https://github.com/heeyezzz/anki-flashcard.git \
+  ~/.hermes/skills/education/anki-flashcard
 ```
 
 （任何 Hermes skill 目录都可以；`SKILL.md` 所在目录即技能根目录。）
@@ -39,7 +39,7 @@ security add-generic-password -U -a "$USER" -s anki-minimax-tts -w "$MINIMAX_KEY
 ## 用法
 
 ```sh
-SKILL_DIR=~/.hermes/skills/education/anki-context
+SKILL_DIR=~/.hermes/skills/education/anki-flashcard
 
 # 1) 建新卡：先看草稿，确认后再落库
 node "$SKILL_DIR/scripts/import-vocabulary.mjs" /abs/path/notes.json --dry-run
@@ -91,7 +91,7 @@ tests/acceptance.sh           验收套件（37 项）
 
 - **内容寻址音频**：`<prefix>-<slug>-<slot>-<sha256(text,model,voice,speed)[:16]>.mp3`。改句子 = 换文件名 = 自动重录；没改 = 复用。中断后重跑不会重复付费。
 - **规则单一来源**：`note-rules.mjs` 同时被"建卡"和"改卡"使用，避免两条路径的标准跑偏。
-- **改写而非重建**：`rewrite-existing.mjs` 按 `Word` 在指定牌组内定位笔记，只更新内容与语音，**不删卡不重建**，学习进度（queue / reps / lapses）完整保留；写前落一份字段快照到 `~/.hermes/cache/anki-context/backups/`，删媒体前会确认全模型没有别的卡在引用它。
+- **改写而非重建**：`rewrite-existing.mjs` 按 `Word` 在指定牌组内定位笔记，只更新内容与语音，**不删卡不重建**，学习进度（queue / reps / lapses）完整保留；写前落一份字段快照到 `~/.hermes/cache/anki-flashcard/backups/`，删媒体前会确认全模型没有别的卡在引用它。
 - **只读体检**：`ensure-audio-fields.mjs`、`verify-import.mjs` 永不写库；需要修复的动作要显式 `--apply` / `--confirmed`。
 - **不碰模板与排程**：本技能只写笔记字段与媒体文件，不改笔记类型模板/样式，不评分、不改调度。
 
@@ -105,7 +105,7 @@ tests/acceptance.sh           验收套件（37 项）
 这个目录同时是你的 Hermes skill 和这个 Git 仓库。改完 skill 后：
 
 ```sh
-cd ~/.hermes/skills/education/anki-context
+cd ~/.hermes/skills/education/anki-flashcard
 git add -A && git commit -m "描述这次改动"
 GH_CONFIG_DIR=~/.hermes/gh-config git push
 ```

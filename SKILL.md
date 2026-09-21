@@ -1,5 +1,5 @@
 ---
-name: anki-context
+name: anki-flashcard
 description: "Use when importing 微语境闪卡 notes into Anki via AnkiConnect."
 version: 1.0.0
 platforms: [macos, linux]
@@ -74,7 +74,7 @@ visible card content, not just fields behind the answer.
 ## Import
 
 ```sh
-SKILL_DIR="/path/to/installed/anki-context"
+SKILL_DIR="/path/to/installed/anki-flashcard"
 node "$SKILL_DIR/scripts/import-vocabulary.mjs" /absolute/path/to/notes.json --dry-run --minimax-voice "English_Steady_Female_1"
 node "$SKILL_DIR/scripts/import-vocabulary.mjs" /absolute/path/to/notes.json --confirmed --minimax-voice "English_Steady_Female_1"
 ```
@@ -82,7 +82,7 @@ node "$SKILL_DIR/scripts/import-vocabulary.mjs" /absolute/path/to/notes.json --c
 The endpoint defaults to Agent Connect at `http://127.0.0.1:8766`; override it with `ANKI_CONNECT_URL`
 or `--anki-connect-url` (the original AnkiConnect speaks the same API on `8765`; this skill additionally
 uses the Agent Connect-only `renderCard` action in `verify-import.mjs`). The note type defaults to `微语境闪卡 1.0`; set `modelName` in the JSON, or
-`ANKI_CONTEXT_MODEL`, when the same template is installed under another name. The script requires the
+`ANKI_FLASHCARD_MODEL`, when the same template is installed under another name. The script requires the
 existing model and deck and never creates or edits either. It validates 3–5 consecutive context
 groups, rejects markup and sentences the template cannot highlight, rejects words already present in
 the model, calls `canAddNotes`, adds notes, and reads every field back.
@@ -191,7 +191,7 @@ node "$SKILL_DIR/scripts/rewrite-existing.mjs" /absolute/path/rewrite.json --dec
 - Audio filenames are content-addressed, so an unchanged sentence keeps its clip and only the edited
   ones are re-recorded (`"state": "reuse"` vs `"state": "new"` in the plan). Context slots beyond the
   new count are cleared and their clips deleted.
-- Before writing it drops a field snapshot into `~/.hermes/cache/anki-context/backups/` (that file is
+- Before writing it drops a field snapshot into `~/.hermes/cache/anki-flashcard/backups/` (that file is
   the rollback), and deletes media only after checking that no other note in the model still uses it.
 - After writing it reads every field back and checks each audio filename is in the media collection; a
   single mismatch fails the run. Then verify independently with `verify-import.mjs`.
@@ -208,7 +208,7 @@ groups, unknown `Theme`, full-English part of speech, duplicate word), the refus
 `--confirmed`, the A2 gate (`--strict-level`, `--no-level-check`, an A2-clean note), and the rewrite
 planner (no-change plan, audio reuse, unknown word refused).
 
-Its Anki-touching checks provision their own fixture note in `测试::anki-context验收` (imported with
+Its Anki-touching checks provision their own fixture note in `测试::anki-flashcard验收` (imported with
 real MiniMax audio on the first run) and drive everything through that card, so the suite keeps
 working when the learner deletes or edits cards in their own decks:
 
@@ -235,6 +235,6 @@ assets/allow-extra.txt                自备白名单：你已掌握的专业词
 assets/irregular-forms.txt            不规则变化（made/found/meant…）不算超纲
 scripts/minimax-tts.mjs              TTS 调用与确定性文件名
 scripts/minimax-credentials.mjs      key：env → Keychain → .env
-tests/acceptance.sh                  验收套件（33 项；只写 测试::anki-context验收 夹具牌组）
+tests/acceptance.sh                  验收套件（33 项；只写 测试::anki-flashcard验收 夹具牌组）
 agents/openai.yaml, .env.example, .gitignore
 ```

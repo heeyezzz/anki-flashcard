@@ -11,7 +11,7 @@ Top-level JSON:
 }
 ```
 
-`modelName` is optional and defaults to `微语境闪卡 1.0` (`ANKI_CONTEXT_MODEL` overrides the default);
+`modelName` is optional and defaults to `微语境闪卡 1.0` (`ANKI_FLASHCARD_MODEL` overrides the default);
 set it when the same template is installed under a different note-type name. `tags` is optional and
 defaults to `["微语境"]`. The AnkiConnect endpoint is configured outside this JSON with
 `ANKI_CONNECT_URL` or `--anki-connect-url`.

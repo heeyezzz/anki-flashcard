@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * anki-context — independent verification of imported 微语境闪卡 notes.
+ * anki-flashcard — independent verification of imported 微语境闪卡 notes.
  *
  * Checks each note against the note type's contract and against the *rendered* card:
  *   1. the input fields are present;
@@ -19,7 +19,7 @@
 import { findAboveLevel, loadCefrList, targetFormsOf } from "./level-check.mjs";
 
 const API_URL = process.env.ANKI_CONNECT_URL || "http://127.0.0.1:8766";
-const MODEL_NAME = process.env.ANKI_CONTEXT_MODEL || "微语境闪卡 1.0";
+const MODEL_NAME = process.env.ANKI_FLASHCARD_MODEL || "微语境闪卡 1.0";
 const usage = "Usage: node verify-import.mjs --deck DECK_NAME [--word WORD] [--fail-on-level] [--anki-connect-url URL]";
 const options = process.argv.slice(2);
 const config = { deckName: "", word: "", apiUrl: API_URL, failOnLevel: false };

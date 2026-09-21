@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Acceptance tests for the anki-context skill. Read-only against Anki:
+# Acceptance tests for the anki-flashcard skill. Read-only against Anki:
 # --dry-run for the happy path, --without-tts + no --confirmed for the refusal test.
 # Nothing here writes notes, media, or the note type.
 set -uo pipefail
 S="$(cd "$(dirname "$0")/.." && pwd)"
-T="${TMPDIR:-/tmp}/anki-context-tests"
+T="${TMPDIR:-/tmp}/anki-flashcard-tests"
 mkdir -p "$T"
 pass=0; fail=0
 check() { # check <label> <expected-substring> <command...>
@@ -101,7 +101,7 @@ def rewrite_note(word="incur"):
         "SentenceCN3": "如果你晚付款，就可能要付一笔费用。", "Analysis3": "incur a fee：产生费用。"
     }
 (T/"rewrite_ok.json").write_text(json.dumps({
-    "modelName": "微语境闪卡 1.0", "deckName": "测试::anki-context验收", "notes": [rewrite_note()]}, ensure_ascii=False))
+    "modelName": "微语境闪卡 1.0", "deckName": "测试::anki-flashcard验收", "notes": [rewrite_note()]}, ensure_ascii=False))
 ghost = rewrite_note("ghostword")
 ghost.update({
     "IPA": "/ˈɡoʊstwɜːrd/", "ChineseCore": "n. 幽灵词（验收夹具）",
@@ -112,7 +112,7 @@ ghost.update({
     "Sentence3": "They always ghostword the box in the morning.", "Meaning3": "幽灵用法三",
     "SentenceCN3": "他们总是在早上幽灵那个箱子。", "Analysis3": "ghostword the box：验收用假搭配。"})
 (T/"rewrite_ghost.json").write_text(json.dumps({
-    "modelName": "微语境闪卡 1.0", "deckName": "测试::anki-context验收", "notes": [ghost]}, ensure_ascii=False))
+    "modelName": "微语境闪卡 1.0", "deckName": "测试::anki-flashcard验收", "notes": [ghost]}, ensure_ascii=False))
 print("fixtures written to", T)
 PY
 check "--dry-run prints the content preview"  '"dryRun": true'          node "$S/scripts/import-vocabulary.mjs" "$T/ok.json" --dry-run
@@ -133,12 +133,12 @@ echo "== 5. confirmation gate (no writes allowed to happen) =="
 check "refuses to import without --confirmed" "Refusing unconfirmed import" node "$S/scripts/import-vocabulary.mjs" "$T/ok.json" --without-tts
 
 echo "== 6. 验收夹具卡（只写独立测试牌组，不触碰你的牌组） =="
-FIXTURE_DECK="测试::anki-context验收"
+FIXTURE_DECK="测试::anki-flashcard验收"
 FIXTURE_JSON="$T/verify_deck.json"
 cat > "$FIXTURE_JSON" <<'JSON'
 {
   "modelName": "微语境闪卡 1.0",
-  "deckName": "测试::anki-context验收",
+  "deckName": "测试::anki-flashcard验收",
   "tags": ["微语境", "验收夹具"],
   "notes": [{
     "Word": "incur", "IPA": "/ɪnˈkɜːr/", "ChineseCore": "v. 招致，蒙受（损失、费用）", "Theme": "bauhaus",

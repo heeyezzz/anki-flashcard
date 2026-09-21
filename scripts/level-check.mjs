@@ -1,5 +1,5 @@
 /**
- * anki-context — sentence difficulty check.
+ * anki-flashcard — sentence difficulty check.
  *
  * Rule: everything in an example sentence except the target word must stay inside CEFR A2, so the
  * learner can read the card without meeting a second unknown word. This module turns the bundled

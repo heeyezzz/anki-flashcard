@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * anki-context — rewrite the content of existing 微语境闪卡 notes in place, audio included.
+ * anki-flashcard — rewrite the content of existing 微语境闪卡 notes in place, audio included.
  *
  * This script never adds or deletes notes. It matches each input note to an existing note by Word
  * inside one deck (--deck), updates the content fields, regenerates only the audio whose text really
@@ -34,8 +34,8 @@ import {
 } from "./note-rules.mjs";
 
 const DEFAULT_API_URL = "http://127.0.0.1:8766";
-const DEFAULT_MODEL_NAME = process.env.ANKI_CONTEXT_MODEL || "微语境闪卡 1.0";
-const DEFAULT_BACKUP_DIR = join(homedir(), ".hermes", "cache", "anki-context", "backups");
+const DEFAULT_MODEL_NAME = process.env.ANKI_FLASHCARD_MODEL || "微语境闪卡 1.0";
+const DEFAULT_BACKUP_DIR = join(homedir(), ".hermes", "cache", "anki-flashcard", "backups");
 const usage = "Usage: node rewrite-existing.mjs /absolute/path/to/notes.json --deck DECK [--dry-run] [--confirmed] [--without-tts] [--strict-level] [--no-level-check] [--anki-connect-url URL] [--backup-dir DIR] [--tts minimax --minimax-voice VOICE_ID] [--minimax-model MODEL] [--minimax-speed NUMBER] [--minimax-min-interval-ms NUMBER] [--minimax-api-key-env NAME] [--minimax-keychain-service NAME] [--minimax-env-file PATH] [--minimax-endpoint URL] [--media-prefix PREFIX]";
 
 const [inputPath, ...options] = process.argv.slice(2);

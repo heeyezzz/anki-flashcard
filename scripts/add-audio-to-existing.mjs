@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * anki-context — add MiniMax audio to 微语境闪卡 1.0 notes that are already in a deck.
+ * anki-flashcard — add MiniMax audio to 微语境闪卡 1.0 notes that are already in a deck.
  * Never overwrites a filename that is already stored, unless --refresh asks for it.
  */
 import { cleanSpeechText, createMediaFilename, MINIMAX_TTS_ENDPOINT, synthesizeMiniMax } from "./minimax-tts.mjs";
 import { getMiniMaxApiKey } from "./minimax-credentials.mjs";
 
 const API_URL = process.env.ANKI_CONNECT_URL || "http://127.0.0.1:8766";
-const MODEL_NAME = process.env.ANKI_CONTEXT_MODEL || "微语境闪卡 1.0";
+const MODEL_NAME = process.env.ANKI_FLASHCARD_MODEL || "微语境闪卡 1.0";
 const AUDIO_FIELDS = ["WordAudio", ...Array.from({ length: 5 }, (_, index) => `AudioSentence${index + 1}`)];
 const usage = "Usage: node add-audio-to-existing.mjs --deck DECK_NAME --minimax-voice VOICE_ID [--word WORD] [--refresh] [--dry-run] [--minimax-model MODEL] [--minimax-speed NUMBER] [--minimax-min-interval-ms NUMBER] [--minimax-api-key-env NAME] [--minimax-keychain-service NAME] [--minimax-env-file PATH] [--minimax-endpoint URL] [--media-prefix PREFIX]";
 const options = process.argv.slice(2);

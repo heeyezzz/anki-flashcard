@@ -1,0 +1,673 @@
+{
+  "meta": {
+    "title": "anki-flashcard 微语境闪卡门禁导入流程",
+    "subtitle": "只读体检 → dry-run 验证与 A2 难度门 → 学习者显式批准 → 付费 TTS + 落库 → renderCard 独立验收 → 自动同步 AnkiWeb",
+    "sourceRef": "anki-flashcard@b36b5ad",
+    "scope": "新词导入主流程（改写流程共用同一套确认门）",
+    "diagramType": "flowchart",
+    "locale": "zh-CN"
+  },
+  "layout": {
+    "primaryPath": [
+      "start",
+      "audit",
+      "dry",
+      "level",
+      "present",
+      "approved",
+      "import",
+      "verify",
+      "passed",
+      "sync",
+      "end-ok"
+    ],
+    "version": "adaptive-v2-elkjs-0.11.0",
+    "strategy": "layered-3-fold2c"
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "label": "学习者请求建卡",
+      "kind": "start",
+      "subtitle": "Word + IPA + ChineseCore + 3–5 组微语境 JSON",
+      "position": {
+        "x": 160.5,
+        "y": 32
+      },
+      "size": {
+        "width": 480,
+        "height": 100
+      }
+    },
+    {
+      "id": "audit",
+      "label": "ensure-audio-fields.mjs 只读体检",
+      "kind": "process",
+      "module": "schema-audit",
+      "facts": [
+        "只读检查 WordAudio / AudioSentence1..5 是否存在",
+        "缺字段则停止，需授权后才跑 --apply 修复"
+      ],
+      "source": {
+        "kind": "source",
+        "file": "SKILL.md",
+        "lineStart": 62,
+        "lineEnd": 64
+      },
+      "position": {
+        "x": 162.5,
+        "y": 212
+      },
+      "size": {
+        "width": 476,
+        "height": 100
+      }
+    },
+    {
+      "id": "dry",
+      "label": "import-vocabulary.mjs --dry-run",
+      "kind": "process",
+      "module": "content-rules",
+      "facts": [
+        "note-rules.mjs 校验字段契约（无 cloze、含目标词、组连续）",
+        "列出每段语音：复用几个 / 新生成几个（付费预估）"
+      ],
+      "source": {
+        "kind": "source",
+        "file": "SKILL.md",
+        "lineStart": 64,
+        "lineEnd": 70
+      },
+      "position": {
+        "x": 184.5,
+        "y": 502
+      },
+      "size": {
+        "width": 480,
+        "height": 100
+      }
+    },
+    {
+      "id": "level",
+      "label": "有超纲词或校验失败?",
+      "kind": "decision",
+      "module": "content-rules",
+      "facts": [
+        "A2 难度门：除目标词外全部词须在 CEFR A2 内",
+        "--strict-level 时超纲直接阻断"
+      ],
+      "source": {
+        "kind": "source",
+        "file": "SKILL.md",
+        "lineStart": 66,
+        "lineEnd": 69
+      },
+      "position": {
+        "x": 284,
+        "y": 682
+      },
+      "size": {
+        "width": 281,
+        "height": 134
+      }
+    },
+    {
+      "id": "rewrite",
+      "label": "改写例句 / 更新 allow-extra.txt",
+      "kind": "process",
+      "module": "content-rules",
+      "facts": [
+        "按 example-design.md 的 A2 规则重写",
+        "学习者已掌握的词可加白名单豁免"
+      ],
+      "source": {
+        "kind": "source",
+        "file": "SKILL.md",
+        "lineStart": 67,
+        "lineEnd": 68
+      },
+      "position": {
+        "x": 32,
+        "y": 1006
+      },
+      "size": {
+        "width": 456,
+        "height": 100
+      }
+    },
+    {
+      "id": "present",
+      "label": "向学习者呈现完整卡内容",
+      "kind": "output",
+      "module": "learner-review",
+      "facts": [
+        "词、音标、中文释义、每句 + 语境义 + 翻译 + 解析",
+        "用学习者自己的语言呈现"
+      ],
+      "source": {
+        "kind": "source",
+        "file": "SKILL.md",
+        "lineStart": 64,
+        "lineEnd": 66
+      },
+      "position": {
+        "x": 552,
+        "y": 1006
+      },
+      "size": {
+        "width": 313,
+        "height": 100
+      }
+    },
+    {
+      "id": "approved",
+      "label": "学习者明确批准内容?",
+      "kind": "decision",
+      "module": "learner-review",
+      "facts": [
+        "批准『加这个词』或使用 TTS ≠ 内容批准",
+        "脚本在 --confirmed 缺失时先于付费请求拒绝写入"
+      ],
+      "source": {
+        "kind": "source",
+        "file": "scripts/import-vocabulary.mjs",
+        "lineStart": 258,
+        "lineEnd": 258
+      },
+      "position": {
+        "x": 568,
+        "y": 1186
+      },
+      "size": {
+        "width": 281,
+        "height": 134
+      }
+    },
+    {
+      "id": "import",
+      "label": "--confirmed：MiniMax TTS + addNote",
+      "kind": "process",
+      "module": "tts-import",
+      "facts": [
+        "每词 1 段 + 每句 1 段，内容寻址文件名可复用",
+        "写库后逐字段回读"
+      ],
+      "source": {
+        "kind": "source",
+        "file": "SKILL.md",
+        "lineStart": 71,
+        "lineEnd": 72
+      },
+      "position": {
+        "x": 89,
+        "y": 1510
+      },
+      "size": {
+        "width": 480,
+        "height": 100
+      }
+    },
+    {
+      "id": "verify",
+      "label": "verify-import.mjs 独立验收",
+      "kind": "process",
+      "module": "verification",
+      "facts": [
+        "字段一致 / 音频体量正常 / 恰好一张卡",
+        "renderCard(format=text) 查正面无答案泄漏"
+      ],
+      "source": {
+        "kind": "source",
+        "file": "scripts/verify-import.mjs",
+        "lineStart": 127,
+        "lineEnd": 127
+      },
+      "position": {
+        "x": 1373,
+        "y": 32
+      },
+      "size": {
+        "width": 408,
+        "height": 100
+      }
+    },
+    {
+      "id": "passed",
+      "label": "验收全部通过?",
+      "kind": "decision",
+      "module": "verification",
+      "facts": [
+        "脚本自述不算数，须独立复查"
+      ],
+      "source": {
+        "kind": "source",
+        "file": "SKILL.md",
+        "lineStart": 131,
+        "lineEnd": 131
+      },
+      "position": {
+        "x": 1457,
+        "y": 212
+      },
+      "size": {
+        "width": 240,
+        "height": 134
+      }
+    },
+    {
+      "id": "sync",
+      "label": "syncNow → 轮询 syncStatus",
+      "kind": "process",
+      "module": "cloud-sync",
+      "facts": [
+        "固定规则：验收通过后自动同步，不再询问",
+        "job 到 done 且 required=no_changes 才算成功"
+      ],
+      "source": {
+        "kind": "source",
+        "file": "SKILL.md",
+        "lineStart": 167,
+        "lineEnd": 167
+      },
+      "position": {
+        "x": 1227.5,
+        "y": 536
+      },
+      "size": {
+        "width": 411,
+        "height": 100
+      }
+    },
+    {
+      "id": "end-ok",
+      "label": "报告 noteId / cardId：卡片已入库并同步 AnkiWeb",
+      "kind": "end",
+      "position": {
+        "x": 1193,
+        "y": 716
+      },
+      "size": {
+        "width": 480,
+        "height": 100
+      }
+    },
+    {
+      "id": "end-stop",
+      "label": "停止：未获批准，不产生任何付费 TTS 或写入",
+      "kind": "end",
+      "position": {
+        "x": 633,
+        "y": 1510
+      },
+      "size": {
+        "width": 480,
+        "height": 100
+      }
+    },
+    {
+      "id": "end-fail",
+      "label": "上报失败项：不同步、不声称完成",
+      "kind": "end",
+      "position": {
+        "x": 1702.5,
+        "y": 536
+      },
+      "size": {
+        "width": 405,
+        "height": 100
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "f1",
+      "source": "start",
+      "target": "audit",
+      "kind": "flow",
+      "evidence": "document",
+      "route": {
+        "via": [
+          {
+            "x": 400.5,
+            "y": 144
+          },
+          {
+            "x": 400.5,
+            "y": 200
+          }
+        ]
+      }
+    },
+    {
+      "id": "f2",
+      "source": "audit",
+      "target": "dry",
+      "kind": "flow",
+      "label": "字段齐全",
+      "evidence": "document",
+      "route": {
+        "via": [
+          {
+            "x": 400.5,
+            "y": 324
+          },
+          {
+            "x": 400.5,
+            "y": 490
+          }
+        ],
+        "labelAt": {
+          "x": 400.5,
+          "y": 407
+        }
+      }
+    },
+    {
+      "id": "f3",
+      "source": "dry",
+      "target": "level",
+      "kind": "flow",
+      "evidence": "document",
+      "route": {
+        "via": [
+          {
+            "x": 424.5,
+            "y": 614
+          },
+          {
+            "x": 424.5,
+            "y": 670
+          }
+        ]
+      }
+    },
+    {
+      "id": "f4",
+      "source": "level",
+      "target": "rewrite",
+      "kind": "yes",
+      "label": "是：先修内容",
+      "evidence": "document",
+      "route": {
+        "via": [
+          {
+            "x": 272,
+            "y": 749
+          },
+          {
+            "x": 260,
+            "y": 749
+          },
+          {
+            "x": 260,
+            "y": 994
+          }
+        ],
+        "labelAt": {
+          "x": 260,
+          "y": 911
+        }
+      }
+    },
+    {
+      "id": "f5",
+      "source": "rewrite",
+      "target": "dry",
+      "kind": "flow",
+      "label": "重跑 dry-run",
+      "evidence": "inference",
+      "route": {
+        "via": [
+          {
+            "x": 260,
+            "y": 1118
+          },
+          {
+            "x": 260,
+            "y": 1130
+          },
+          {
+            "x": 889,
+            "y": 1130
+          },
+          {
+            "x": 889,
+            "y": 446
+          },
+          {
+            "x": 448.5,
+            "y": 446
+          },
+          {
+            "x": 448.5,
+            "y": 490
+          }
+        ],
+        "labelAt": {
+          "x": 889,
+          "y": 749
+        }
+      }
+    },
+    {
+      "id": "f6",
+      "source": "level",
+      "target": "present",
+      "kind": "no",
+      "label": "否：零警告",
+      "evidence": "document",
+      "route": {
+        "via": [
+          {
+            "x": 577,
+            "y": 749
+          },
+          {
+            "x": 708.5,
+            "y": 749
+          },
+          {
+            "x": 708.5,
+            "y": 994
+          }
+        ],
+        "labelAt": {
+          "x": 708.5,
+          "y": 911
+        }
+      }
+    },
+    {
+      "id": "f7",
+      "source": "present",
+      "target": "approved",
+      "kind": "flow",
+      "evidence": "document",
+      "route": {
+        "via": [
+          {
+            "x": 708.5,
+            "y": 1118
+          },
+          {
+            "x": 708.5,
+            "y": 1174
+          }
+        ]
+      }
+    },
+    {
+      "id": "f8",
+      "source": "approved",
+      "target": "import",
+      "kind": "yes",
+      "label": "明确批准",
+      "evidence": "source",
+      "route": {
+        "via": [
+          {
+            "x": 556,
+            "y": 1253
+          },
+          {
+            "x": 329,
+            "y": 1253
+          },
+          {
+            "x": 329,
+            "y": 1498
+          }
+        ],
+        "labelAt": {
+          "x": 329,
+          "y": 1415
+        }
+      }
+    },
+    {
+      "id": "f9",
+      "source": "approved",
+      "target": "end-stop",
+      "kind": "no",
+      "label": "未批准",
+      "evidence": "source",
+      "route": {
+        "via": [
+          {
+            "x": 861,
+            "y": 1253
+          },
+          {
+            "x": 873,
+            "y": 1253
+          },
+          {
+            "x": 873,
+            "y": 1498
+          }
+        ],
+        "labelAt": {
+          "x": 873,
+          "y": 1415
+        }
+      }
+    },
+    {
+      "id": "f10",
+      "source": "import",
+      "target": "verify",
+      "kind": "flow",
+      "evidence": "document",
+      "route": {
+        "via": [
+          {
+            "x": 329,
+            "y": 1658
+          },
+          {
+            "x": 1137,
+            "y": 1658
+          },
+          {
+            "x": 1137,
+            "y": 82
+          }
+        ]
+      }
+    },
+    {
+      "id": "f11",
+      "source": "verify",
+      "target": "passed",
+      "kind": "flow",
+      "evidence": "document",
+      "route": {
+        "via": [
+          {
+            "x": 1577,
+            "y": 144
+          },
+          {
+            "x": 1577,
+            "y": 200
+          }
+        ]
+      }
+    },
+    {
+      "id": "f12",
+      "source": "passed",
+      "target": "sync",
+      "kind": "yes",
+      "label": "0 problems",
+      "evidence": "document",
+      "route": {
+        "via": [
+          {
+            "x": 1445,
+            "y": 279
+          },
+          {
+            "x": 1433,
+            "y": 279
+          },
+          {
+            "x": 1433,
+            "y": 524
+          }
+        ],
+        "labelAt": {
+          "x": 1433,
+          "y": 441
+        }
+      }
+    },
+    {
+      "id": "f13",
+      "source": "passed",
+      "target": "end-fail",
+      "kind": "no",
+      "label": "有失败项",
+      "evidence": "document",
+      "route": {
+        "via": [
+          {
+            "x": 1709,
+            "y": 279
+          },
+          {
+            "x": 1905,
+            "y": 279
+          },
+          {
+            "x": 1905,
+            "y": 524
+          }
+        ],
+        "labelAt": {
+          "x": 1905,
+          "y": 441
+        }
+      }
+    },
+    {
+      "id": "f14",
+      "source": "sync",
+      "target": "end-ok",
+      "kind": "success",
+      "evidence": "document",
+      "route": {
+        "via": [
+          {
+            "x": 1433,
+            "y": 648
+          },
+          {
+            "x": 1433,
+            "y": 704
+          }
+        ]
+      }
+    }
+  ]
+}
