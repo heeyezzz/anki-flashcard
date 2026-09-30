@@ -167,10 +167,15 @@ visually, never by counting strings in the HTML.
 ### Auto-sync after import (standing instruction)
 
 Once the import succeeds and `verify-import.mjs` passes, sync to AnkiWeb **without asking again** — the
-user authorized this on 2026-09-21. Call Agent Connect's `syncNow`, then poll `syncStatus` until
-`job.state` returns to `idle`, and report the final `required` value. A job error or a `required` that
-is still `normal_sync` must be surfaced, not reported as synced. The original AnkiConnect has no sync
-actions; there, ask the user to press the sync button instead.
+user authorized this on 2026-09-21. Call Agent Connect's `syncNow` (it answers
+`{started:true, mediaSync:true}` once the job is accepted), then poll `syncStatus` until the job
+reaches its terminal state and report the final `required` value. **Agent Connect's terminal
+`job.state` is `done`, not `idle`** — the observed sequence is `syncing` → `media_syncing` → `done`,
+with `required` going `null` → `no_changes`. Break the poll on `done` *or* `idle` so the loop also
+works against builds that use the other word; polling only for `idle` never terminates. Success is
+`job.state` terminal + `job.error` null + `loggedIn:true` + `mediaSyncing:false`. A job error or a
+`required` that is still `normal_sync` must be surfaced, not reported as synced. The original
+AnkiConnect has no sync actions; there, ask the user to press the sync button instead.
 
 ## Rewriting cards that already exist
 
