@@ -89,10 +89,13 @@ groups (never inside `（…）`) and starts a new group whenever the part of sp
 `v` badge beside ③ — the part of speech appears once per group and is never repeated per line, and the
 circled numbers run continuously across groups. The block carries **no `全局释义` label** (removed
 2026-10-06: the framed panel is the label). This is render-side only — the field keeps
-its single-line dictionary string, so no note content changes and no media is re-paid. Then one row per
-context: English sentence, Chinese translation with the annotated word underlined (`Meaning{i}` as
-tooltip) and `Analysis{i}` beneath, plus `OtherMeanings` in a collapsed block; it auto-plays **the word
-only** — every sentence audio is manual, behind that row's speaker button. So `Word`, `IPA` and
+its single-line dictionary string, so no note content changes and no media is re-paid. Then two stacked
+panels: **例句** = one row per context with the English sentence (target word highlighted) and its
+Chinese translation (the annotated word underlined, `Meaning{i}` as tooltip) and the row's speaker button
+at the row's **right edge**; **助记** = the `Analysis{i}` collocation notes gathered from the hidden
+`.mctx-analysis-src` spans and re-numbered with their own sentence's `01..05`, followed by `OtherMeanings`
+in a collapsed 其他义项 block. The 助记 panel hides itself when a note has neither. It auto-plays **the
+word only** — every sentence audio is manual, behind that row's speaker button. So `Word`, `IPA` and
 `WordAudio` are now visible card content, not just fields behind the answer.
 
 ## Before writing

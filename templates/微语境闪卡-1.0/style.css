@@ -66,6 +66,11 @@
   background: var(--mx-soft);
 }
 
+/* 背面第二个面板（助记）：与例句面板同一块板，只多点呼吸 */
+.mctx-mnemo {
+  margin-top: 14px;
+}
+
 /* 正面是"检索"面，留更多呼吸空间让人盯着句子回忆；
    发音按钮与背面「本次例句」面板一样走抬头行右侧（.mctx-recap-head），不再绝对定位 */
 .mctx-card--front .mctx-stage {
@@ -330,11 +335,15 @@
 
 .mctx-other-heading {
   display: grid;
-  /* Scene 字段已删除，头部只剩「序号 + 播放按钮」，按钮靠右 */
   grid-template-columns: 2.4ch minmax(0, 1fr);
   align-items: center;
   gap: 8px;
   min-width: 0;
+}
+
+/* 喇叭贴行的右边缘，不跟着序号挤在左上角（正反面同一套行结构，一起生效） */
+.mctx-other-heading .mctx-audio-btn {
+  justify-self: end;
 }
 
 .mctx-other-index {

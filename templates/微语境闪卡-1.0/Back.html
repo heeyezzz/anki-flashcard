@@ -29,9 +29,9 @@
     </p>
   </section>
 
-  <section class="mctx-recap" id="mctx-recap" aria-label="例句与翻译" style="padding-top:12px">
+  <section class="mctx-recap" id="mctx-recap" aria-label="例句" style="padding-top:12px">
     <div class="mctx-recap-head">
-      <div class="mctx-answer-label">例句与翻译</div>
+      <div class="mctx-answer-label">例句</div>
       <span class="mctx-hint" id="mctx-hint">点下划线看本句义</span>
     </div>
 
@@ -45,7 +45,7 @@
         </div>
         <p class="mctx-sentence">{{Sentence1}}</p>
         <p class="mctx-gloss-cn">{{SentenceCN1}}</p>
-        <p class="mctx-analysis">{{Analysis1}}</p>
+        <p class="mctx-analysis-src" hidden>{{Analysis1}}</p>
         <span class="mctx-path" hidden>{{AudioSentence1}}</span>
         <span class="mctx-meaning-src" hidden>{{Meaning1}}</span>
       </li>
@@ -58,7 +58,7 @@
         </div>
         <p class="mctx-sentence">{{Sentence2}}</p>
         <p class="mctx-gloss-cn">{{SentenceCN2}}</p>
-        <p class="mctx-analysis">{{Analysis2}}</p>
+        <p class="mctx-analysis-src" hidden>{{Analysis2}}</p>
         <span class="mctx-path" hidden>{{AudioSentence2}}</span>
         <span class="mctx-meaning-src" hidden>{{Meaning2}}</span>
       </li>
@@ -71,7 +71,7 @@
         </div>
         <p class="mctx-sentence">{{Sentence3}}</p>
         <p class="mctx-gloss-cn">{{SentenceCN3}}</p>
-        <p class="mctx-analysis">{{Analysis3}}</p>
+        <p class="mctx-analysis-src" hidden>{{Analysis3}}</p>
         <span class="mctx-path" hidden>{{AudioSentence3}}</span>
         <span class="mctx-meaning-src" hidden>{{Meaning3}}</span>
       </li>
@@ -84,7 +84,7 @@
         </div>
         <p class="mctx-sentence">{{Sentence4}}</p>
         <p class="mctx-gloss-cn">{{SentenceCN4}}</p>
-        <p class="mctx-analysis">{{Analysis4}}</p>
+        <p class="mctx-analysis-src" hidden>{{Analysis4}}</p>
         <span class="mctx-path" hidden>{{AudioSentence4}}</span>
         <span class="mctx-meaning-src" hidden>{{Meaning4}}</span>
       </li>
@@ -97,11 +97,19 @@
         </div>
         <p class="mctx-sentence">{{Sentence5}}</p>
         <p class="mctx-gloss-cn">{{SentenceCN5}}</p>
-        <p class="mctx-analysis">{{Analysis5}}</p>
+        <p class="mctx-analysis-src" hidden>{{Analysis5}}</p>
         <span class="mctx-path" hidden>{{AudioSentence5}}</span>
         <span class="mctx-meaning-src" hidden>{{Meaning5}}</span>
       </li>
     </ol>
+  </section>
+
+  <!-- 助记：各句的搭配解析按例句序号归集到这里，加上本词的其他义项（内容由脚本从隐藏源填入） -->
+  <section class="mctx-recap mctx-mnemo" id="mctx-mnemo" aria-label="助记" hidden>
+    <div class="mctx-recap-head">
+      <div class="mctx-answer-label">助记</div>
+    </div>
+    <ol class="mctx-other-list" id="mctx-mnemo-list"></ol>
 
     <details class="mctx-extra" id="mctx-extra">
       <summary>其他义项</summary>
@@ -306,6 +314,8 @@
   const empty = document.getElementById("mctx-empty");
   const definition = document.querySelector(".mctx-definition");
   const recap = document.getElementById("mctx-recap");
+  const mnemo = document.getElementById("mctx-mnemo");
+  const mnemoList = document.getElementById("mctx-mnemo-list");
 
   // 释义块是第一焦点：没有 ChineseCore 就整块藏掉，不留空面板。
   const coreBox = document.getElementById("mctx-core-meaning");
@@ -375,9 +385,6 @@
       gloss.hidden = true;
     }
 
-    const analysis = slot.querySelector(".mctx-analysis");
-    if (!own(analysis)) analysis.hidden = true;
-
     const button = slot.querySelector(".mctx-audio-btn");
     const path = text(slot, ".mctx-path");
     if (!path) { button.hidden = true; return; }
@@ -402,6 +409,28 @@
   const extra = document.getElementById("mctx-extra");
   if (others) document.getElementById("mctx-other-meanings-text").textContent = others;
   else extra.hidden = true;
+
+  // ---------- 助记：各句的搭配解析按例句序号归集到第二个面板 ----------
+  let mnemoCount = 0;
+  filled.forEach((slot) => {
+    const value = own(slot.querySelector(".mctx-analysis-src"));
+    if (!value) return;
+    mnemoCount += 1;
+    const item = document.createElement("li");
+    item.className = "mctx-other-item";
+    const heading = document.createElement("div");
+    heading.className = "mctx-other-heading";
+    const index = document.createElement("span");
+    index.className = "mctx-other-index";
+    index.textContent = String(slot.dataset.i).padStart(2, "0");
+    heading.appendChild(index);
+    const body = document.createElement("p");
+    body.className = "mctx-analysis";
+    body.textContent = value;
+    item.append(heading, body);
+    mnemoList.appendChild(item);
+  });
+  mnemo.hidden = !mnemoCount && !others;
 
   // ---------- 单词发音：按钮 + 参与自动序列 ----------
   const wordAudio = document.getElementById("mctx-word-audio");
