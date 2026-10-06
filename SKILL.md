@@ -33,19 +33,24 @@ anything is written, `--finish` syncs and quits it after a verified run.
 | `OtherMeanings` `Source` | input JSON | optional; `OtherMeanings` renders in a collapsed 其他义项 block |
 | `WordAudio` `AudioSentence1..5` | **only the scripts** | raw MP3 filenames; never put them in input JSON |
 
-Three things this note type expects that the sibling importer does not:
+Four things this note type expects that the sibling importer does not:
 
 1. **Plain-text sentences — no `{{c1::...}}` cloze.** The templates render `{{Sentence1}}` as text and
-   highlight the target word at render time with `mctxPattern()`. Cloze markup would appear verbatim.
-   Every populated `Sentence{i}` must contain the `Word` or one of the inflections the template can
-   derive (`delay` → `delayed`/`delaying`; multi-word phrases may be joined by `-`). The importer
-   enforces exactly that.
+   highlight the target word at render time with `mctxPattern()`, on **both** sides. Cloze markup would
+   appear verbatim. Every populated `Sentence{i}` must contain the `Word` or one of the inflections the
+   template can derive (`delay` → `delayed`/`delaying`; multi-word phrases may be joined by `-`). The
+   importer enforces exactly that. `【】` is reserved for `SentenceCN{i}` (below) and is rejected in
+   `Sentence{i}`.
 2. **No separate `PartOfSpeech` field.** Carry the part of speech at the start of `ChineseCore` using
    abbreviations (`v. 修改，修订；更正`). Full English words such as `verb` are rejected.
 3. **No `AudioWordAuto`, no `AudioMediaRefs`, no `[sound:...]` tags.** The back template plays
-   word → sentence in sequence with its own JS player, so an Anki-native autoplay tag would play the
-   word **twice**. `AudioSentence1..5` keep the sibling model's names; the word file goes to
+   word → every sentence in sequence with its own JS player, so an Anki-native autoplay tag would play
+   the word **twice**. `AudioSentence1..5` keep the sibling model's names; the word file goes to
    `WordAudio`, not `AudioWord`.
+4. **`SentenceCN{i}` carries exactly one `【…】` pair** around the words that translate the target word
+   (`她在寒风里【发抖】，把外套紧紧裹上。`). The back renders it as an underline and shows that group's
+   `Meaning{i}` on hover/long-press. Missing, doubled, empty or unbalanced markers are a `--dry-run`
+   warning — the card still works, it just loses the annotation.
 
 **`ChineseCore` is dictionary-first (standing rule).** `--dry-run` returns `dictionary.core` — the
 ECDICT gloss cleaned for card use (domain tags, `(… 的复数)` meta text and truncated fragments dropped,
@@ -58,13 +63,17 @@ automated coverage check: on the learner's own cards a character-overlap test fl
 rewording (颤抖 vs 战栗) more often than real gaps, so the two strings are shown side by side at
 confirmation instead. See [the note schema](references/note-schema.md).
 
-`Meaning{i}` is the sense *in that sentence* (the card's first-focus answer); `ChineseCore` is the
-whole-word gloss. Do not duplicate one into the other.
+`Meaning{i}` is the sense *in that sentence*; `ChineseCore` is the whole-word gloss. Do not duplicate one
+into the other. Since the 2026-10-06 template revision `Meaning{i}` is no longer a printed block — it is
+the hover text on the `SentenceCN{i}` underline, so it must stay short enough to read in a tooltip.
 
-What each side renders (as of the current templates): the **front** shows `Word`, `IPA` and one
-`Sentence{i}` with the target word highlighted, plus manual speakers for the word and the sentence;
-the **back** adds `ChineseCore`, the per-sentence `Meaning`, `SentenceCN`, `Analysis` and
-`OtherMeanings`, and plays word → sentence automatically. So `Word`, `IPA` and `WordAudio` are now
+What each side renders (as of the current templates): the **front** shows `Word`, `IPA` and **every**
+populated `Sentence{i}` at once, each with the target word highlighted and its own speaker button — no
+sentence selection, no shuffle bag, and no Chinese anywhere on that side. The **back** puts
+`ChineseCore` in the large first-focus block, then one row per context: English sentence, Chinese
+translation with the annotated word underlined (`Meaning{i}` as tooltip) and `Analysis{i}` beneath, plus
+`OtherMeanings` in a collapsed block; it plays word → all sentences automatically. So `Word`, `IPA` and
+`WordAudio` are now
 visible card content, not just fields behind the answer.
 
 ## Before writing
@@ -179,17 +188,14 @@ To show the user how the card really renders, call Agent Connect's `renderCard` 
 and screenshot it in headless Chromium: wrap the returned `question` / `answer` (each card carries the
 note type's `css`) in
 `<html><head><meta charset="utf-8"></head><body class="card">…</body></html>`, so the result is the
-real card. The
-front's shuffle bag picks a sentence with `Math.random`, so seed `localStorage`
-(`mctx:<word>:<valid-slots>:pool`, e.g. `[1]`) in the head to pin a specific sentence for the shot.
+real card. The front no longer randomises anything (it shows every sentence), so a screenshot needs no
+`localStorage` seeding and is reproducible as-is.
 
 `verify-import.mjs` checks the rendered question through `renderCard` with `format='text'` — visible
 text only, so the stylesheet (whose CSS comments name the answer fields) can never produce a false
 positive. If you ever do a leak check against `format='html'` output by hand, strip `<style>` and
 `<script>` blocks first, and always compare **full** field values — an `Analysis` line normally
-quotes the collocation that is already visible in the sentence. Also note the front DOM contains
-every `Sentence{i}` slot and reveals one with JS, so "which sentence is showing" can only be checked
-visually, never by counting strings in the HTML.
+quotes the collocation that is already visible in the sentence.
 
 ### Auto-sync, then close Anki (standing instruction)
 
@@ -288,5 +294,6 @@ assets/irregular-forms.txt            不规则变化（made/found/meant…）�
 scripts/minimax-tts.mjs              TTS 调用与确定性文件名
 scripts/minimax-credentials.mjs      key：env → Keychain → .env
 tests/acceptance.sh                  验收套件（自带 PASS/FAIL 计数；只写 测试::anki-flashcard验收 夹具牌组）
+templates/微语境闪卡-1.0/             当前 Front/Back/CSS 的留痕副本（含 2026-10-06 改前快照）；脚本不读不写这里
 agents/openai.yaml, .env.example, .gitignore
 ```

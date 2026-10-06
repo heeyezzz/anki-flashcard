@@ -1,0 +1,248 @@
+<!--
+  微语境闪卡 · 正面
+  设计约束：只渲染「单词 + 音标 + 单词音频路径 + 原句 + 本句音频路径 + 目标词高亮」。
+  严禁在此渲染 Meaning / SentenceCN / Analysis / ChineseCore / OtherMeanings —— 否则答案会进入正面 DOM。
+
+  版式：与背面同构 —— 顶部是背面那块「核心单词信息」（去掉本句义与全局释义两块中文，只留词头 + 音标 + 发音），
+  下面是「本次例句」面板（顶条 + 抬头行 + 句子）。
+  两个发音按钮都只手动播放：正面是检索面，不自动出声。
+-->
+<main class="mctx-card mctx-card--front" data-theme="{{text:Theme}}">
+  <span id="mctx-word-key" hidden>{{text:Word}}</span>
+  <span id="mctx-word-audio-path" hidden>{{WordAudio}}</span>
+
+  <section class="mctx-definition" id="mctx-definition" aria-label="核心单词信息">
+    <div class="mctx-wordline">
+      <span class="mctx-word" id="mctx-word">{{Word}}</span>
+      {{#IPA}}<span class="mctx-ipa">{{IPA}}</span>{{/IPA}}
+      <button class="mctx-audio-btn mctx-audio-btn--word" id="mctx-play-word" type="button" hidden
+              aria-label="播放单词发音" title="播放单词发音">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4Z"></path><path d="M16 9.5a4 4 0 0 1 0 5"></path><path d="M18.8 6.8a8 8 0 0 1 0 10.4"></path></svg>
+      </button>
+    </div>
+  </section>
+
+  <section class="mctx-stage" id="mctx-stage" aria-label="本次例句" style="padding-top:12px">
+    <div class="mctx-recap-head">
+      <div class="mctx-answer-label">本次例句</div>
+      <button class="mctx-audio-btn" id="mctx-play-sentence" type="button" hidden
+              aria-label="播放本句发音" title="播放本句发音">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4Z"></path><path d="M16 9.5a4 4 0 0 1 0 5"></path><path d="M18.8 6.8a8 8 0 0 1 0 10.4"></path></svg>
+      </button>
+    </div>
+
+    <div class="mctx-slots">
+      <article class="mctx-slot" data-i="1" hidden>
+        <p class="mctx-sentence">{{Sentence1}}</p>
+        <span class="mctx-path" hidden>{{AudioSentence1}}</span>
+      </article>
+      <article class="mctx-slot" data-i="2" hidden>
+        <p class="mctx-sentence">{{Sentence2}}</p>
+        <span class="mctx-path" hidden>{{AudioSentence2}}</span>
+      </article>
+      <article class="mctx-slot" data-i="3" hidden>
+        <p class="mctx-sentence">{{Sentence3}}</p>
+        <span class="mctx-path" hidden>{{AudioSentence3}}</span>
+      </article>
+      <article class="mctx-slot" data-i="4" hidden>
+        <p class="mctx-sentence">{{Sentence4}}</p>
+        <span class="mctx-path" hidden>{{AudioSentence4}}</span>
+      </article>
+      <article class="mctx-slot" data-i="5" hidden>
+        <p class="mctx-sentence">{{Sentence5}}</p>
+        <span class="mctx-path" hidden>{{AudioSentence5}}</span>
+      </article>
+    </div>
+  </section>
+
+  <p class="mctx-empty" id="mctx-empty" hidden>这张笔记还没有填写任何例句，请补全 Sentence1~5 字段。</p>
+
+  <audio class="mctx-audio" id="mctx-word-audio" preload="none"></audio>
+  <audio class="mctx-audio" id="mctx-audio" preload="none"></audio>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  /* #region pattern */
+  // 由目标词推导高亮正则：覆盖常见屈折变形，避免后端在句子里写任何标记。
+  // delay   -> delay / delays / delayed / delaying
+  // verify  -> verify / verifies / verified / verifying
+  // allocate-> allocate / allocates / allocated / allocating
+  // stop    -> stop / stops / stopped / stopping
+  // bill of lading -> 整条短语，中间空白/连字符均可
+  const mctxPattern = (word) => {
+    const w = String(word == null ? "" : word).trim();
+    if (!w) return null;
+    const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (/\s/.test(w)) {
+      return new RegExp("\\b" + w.split(/\s+/).map(esc).join("[\\s\\-]+") + "\\b", "gi");
+    }
+    const low = w.toLowerCase();
+    const forms = new Set([w]);
+    if (/y$/.test(low)) {
+      const stem = w.slice(0, -1);
+      forms.add(stem + "ies");
+      forms.add(stem + "ied");
+      forms.add(stem + "ying");
+    }
+    if (/e$/.test(low)) {
+      forms.add(w + "d");
+      forms.add(w.slice(0, -1) + "ing");
+    }
+    if (/[^aeiouy]$/i.test(low)) {
+      forms.add(w + w.slice(-1) + "ed");
+      forms.add(w + w.slice(-1) + "ing");
+    }
+    forms.add(w + "s");
+    forms.add(w + "es");
+    forms.add(w + "ed");
+    forms.add(w + "ing");
+    const alts = [...forms].sort((a, b) => b.length - a.length).map(esc);
+    return new RegExp("\\b(?:" + alts.join("|") + ")\\b", "gi");
+  };
+  /* #endregion pattern */
+
+  /* #region highlight */
+  // 走 TreeWalker + <mark>，不做任何 innerHTML 拼接（杜绝注入，也保留原有 DOM 结构）。
+  const mctxHighlight = (root, pattern) => {
+    if (!root || !pattern) return 0;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    const nodes = [];
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (node.nodeValue && node.parentNode && node.parentNode.nodeName !== "MARK") nodes.push(node);
+    }
+    let hits = 0;
+    nodes.forEach((node) => {
+      const text = node.nodeValue;
+      pattern.lastIndex = 0;
+      if (!pattern.test(text)) return;
+      pattern.lastIndex = 0;
+      const frag = document.createDocumentFragment();
+      let last = 0;
+      let m;
+      while ((m = pattern.exec(text)) !== null) {
+        if (!m[0].length) { pattern.lastIndex += 1; continue; }
+        if (m.index > last) frag.append(text.slice(last, m.index));
+        const mark = document.createElement("mark");
+        mark.className = "target-word";
+        mark.textContent = m[0];
+        frag.append(mark);
+        last = m.index + m[0].length;
+        hits += 1;
+      }
+      if (last < text.length) frag.append(text.slice(last));
+      node.parentNode.replaceChild(frag, node);
+    });
+    return hits;
+  };
+  /* #endregion highlight */
+
+  /* #region bag */
+  // 洗牌袋：一轮内不重复、抽完重洗。返回 [本次抽中的编号, 剩余池]。
+  // pool 失效（字段增删、脏数据）时自动重洗；valid 为空返回 [null, []]。
+  const mctxDraw = (pool, valid, rnd) => {
+    if (!valid.length) return [null, []];
+    const ok = Array.isArray(pool) && pool.length && pool.every((i) => valid.indexOf(i) !== -1);
+    let bag = ok ? pool.slice() : valid.slice();
+    if (!ok) {
+      const random = rnd || Math.random;
+      for (let i = bag.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(random() * (i + 1));
+        const tmp = bag[i];
+        bag[i] = bag[j];
+        bag[j] = tmp;
+      }
+    }
+    return [bag.pop(), bag];
+  };
+  /* #endregion bag */
+
+  /* #region fallback */
+  // 存储不可用时的确定性选句：正反面用同一个算法，保证「正面那句」和「背面那句」永远一致。
+  const mctxFallback = (word, valid) => {
+    const seed = String(word).toLowerCase() + "|" + new Date().toDateString();
+    let h = 0;
+    for (let i = 0; i < seed.length; i += 1) h = (h * 31 + seed.charCodeAt(i)) | 0;
+    return valid[Math.abs(h) % valid.length];
+  };
+  /* #endregion fallback */
+
+  /* #region audio */
+  // 正面一律不自动出声：词头与例句各一个按钮，手动播放，播放中按钮转红（与背面同一套视觉）。
+  const mountAudio = (audio, button, src) => {
+    if (!audio || !button || !src) {
+      if (button) button.hidden = true;
+      return false;
+    }
+    const on = () => button.classList.add("is-playing");
+    const off = () => button.classList.remove("is-playing");
+    audio.src = src;
+    button.hidden = false;
+    button.addEventListener("click", () => {
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    });
+    audio.addEventListener("play", on);
+    audio.addEventListener("playing", on);
+    audio.addEventListener("pause", off);
+    audio.addEventListener("ended", off);
+    audio.addEventListener("error", () => { button.hidden = true; off(); });
+    return true;
+  };
+  /* #endregion audio */
+
+  const text = (root, sel) => {
+    const el = root.querySelector(sel);
+    return el ? el.textContent.trim() : "";
+  };
+
+  const card = document.querySelector(".mctx-card");
+  if (!card) return;
+  if (String(card.dataset.theme || "").trim().toLowerCase() === "bauhaus") {
+    card.classList.add("theme-bauhaus");
+  }
+
+  const word = text(document, "#mctx-word-key");
+  const stage = document.getElementById("mctx-stage");
+  const definition = document.getElementById("mctx-definition");
+  const slots = [...document.querySelectorAll(".mctx-slot")].filter((s) => text(s, ".mctx-sentence"));
+  const empty = document.getElementById("mctx-empty");
+
+  // 单词发音与例句无关，先接上：例句缺失时词头仍能发音。
+  mountAudio(document.getElementById("mctx-word-audio"), document.getElementById("mctx-play-word"),
+             text(document, "#mctx-word-audio-path"));
+
+  if (!slots.length) {
+    // 没有例句时整块收起：否则留下空框（背面同样是整块隐藏）
+    if (stage) stage.hidden = true;
+    if (definition) definition.hidden = true;
+    empty.hidden = false;
+    return;
+  }
+  empty.hidden = true;
+
+  const valid = slots.map((s) => Number(s.dataset.i));
+  const bagKey = "mctx:" + word.toLowerCase() + ":" + valid.join("-");
+  let pool = null;
+  try { pool = JSON.parse(localStorage.getItem(bagKey + ":pool") || "null"); } catch (_) {}
+  const draw = mctxDraw(pool, valid, Math.random);
+  const picked = draw[0] === null ? mctxFallback(word, valid) : draw[0];
+  try {
+    localStorage.setItem(bagKey + ":pool", JSON.stringify(draw[1]));
+    localStorage.setItem(bagKey + ":now", String(picked));
+    sessionStorage.setItem(bagKey + ":now", String(picked));
+  } catch (_) {}
+
+  const slot = slots.find((s) => Number(s.dataset.i) === picked) || slots[0];
+  slot.hidden = false;
+
+  // 目标词高亮（句子里找不到目标词的情况已由导入校验拦下，这里只做高亮）
+  mctxHighlight(slot.querySelector(".mctx-sentence"), mctxPattern(word));
+
+  mountAudio(document.getElementById("mctx-audio"), document.getElementById("mctx-play-sentence"),
+             text(slot, ".mctx-path"));
+})();
+</script>

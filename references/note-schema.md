@@ -74,13 +74,18 @@ autoplay tag would play the word twice.
   flags legitimate rewording (颤抖 vs 战栗) — so the two strings are shown side by side and you confirm
   them.
 - `Meaning{i}` is the sense of the target word **in that sentence only** — one short Chinese line
-  (`把（经费）划拨给……；分配`). It is the card's first-focus answer, so do not restate the whole-word
-  gloss or write a second translation of the sentence.
+  (`把（经费）划拨给……；分配`). Since the 2026-10-06 template revision it is not printed as its own
+  block: it becomes the hover/long-press text on the `SentenceCN{i}` underline, so keep it short enough
+  to read in a tooltip. Still never restate the whole-word gloss or write a second translation.
 - `IPA` is rendered on the front right next to the word, so keep the slashed form
   (`/ɪnˈkɜːr/`). A bare or missing pronunciation is visible card content now, not a hidden detail.
   The dry-run also folds KK/DJ apart and warns when the string is far from ECDICT's phonetic; words
   whose phonetic is too short to compare, or missing from the table, are left alone.
-- `SentenceCN{i}` is the Chinese translation of the whole sentence.
+- `SentenceCN{i}` is the Chinese translation of the whole sentence, with **exactly one `【…】` pair**
+  around the words that translate the target word: `她在寒风里【发抖】，把外套紧紧裹上。` The back
+  template renders that span as an underline and attaches the same group's `Meaning{i}` as its tooltip.
+  One pair, balanced, non-empty — `--dry-run` warns on zero, two, empty `【】` or an unbalanced bracket.
+  `【】` has no meaning in `Sentence{i}` and is rejected there.
 - `Analysis{i}` is the collocation/usage note in Chinese, optionally quoting the English pattern
   (`allocate A to B：把 A 分配给 B`).
 - Each populated `Sentence{i}` must be **plain text** containing the `Word` or an inflection the

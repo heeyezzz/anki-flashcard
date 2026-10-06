@@ -46,13 +46,13 @@ base = {
     "Word": "waive", "IPA": "/weɪv/", "ChineseCore": "v. 免除，放弃（费用、权利）", "Theme": "bauhaus",
     "OtherMeanings": "waive a requirement：免除某项要求；名词形式 waiver。",
     "Sentence1": "The bank agreed to waive the transfer fee for small accounts.",
-    "Meaning1": "免除（费用）", "SentenceCN1": "银行同意对小额账户免除转账手续费。",
+    "Meaning1": "免除（费用）", "SentenceCN1": "银行同意对小额账户【免除】转账手续费。",
     "Analysis1": "waive a fee：正式用语，多用于费用、权利、规则。",
     "Sentence2": "Both sides agreed to waive the penalty clause in the contract.",
-    "Meaning2": "放弃（合同条款）", "SentenceCN2": "双方同意放弃合同中的违约金条款。",
+    "Meaning2": "放弃（合同条款）", "SentenceCN2": "双方同意【放弃】合同中的违约金条款。",
     "Analysis2": "waive a clause / a penalty：常用于合同谈判。",
     "Sentence3": "The customs office may waive the inspection for small shipments.",
-    "Meaning3": "免于（检查）", "SentenceCN3": "海关可能对小额货物免予查验。",
+    "Meaning3": "免于（检查）", "SentenceCN3": "海关可能对小额货物【免予】查验。",
     "Analysis3": "waive an inspection：免于某项检查或手续。"
   }]
 }
@@ -78,6 +78,7 @@ variant("duplicate_word", lambda n: n.update(Word="allocate", Sentence1="Please 
                                             Sentence3="We allocate one hour a day to reading."))
 # 检索条件查重：同一个 Meaning 是硬错误；只换主语/宾语的改写句要在 dry-run 里被点名。
 variant("same_meaning", lambda n: n.update(Meaning2="免除（费用）"))
+variant("no_mark", lambda n: n.update(SentenceCN1="银行同意对小额账户免除转账手续费。"))
 variant("bad_lexicon", lambda n: n.update(ChineseCore="adj. 免除，放弃", IPA="/əˈbaʊd/"))
 variant("paraphrase", lambda n: n.update(
     Sentence2="The bank agreed to waive the transfer fee for our account.",
@@ -90,13 +91,13 @@ variant("paraphrase", lambda n: n.update(
   "notes": [{
     "Word": "borrow", "IPA": "/ˈbɒroʊ/", "ChineseCore": "v. 借，借用（东西、钱）", "Theme": "bauhaus",
     "Sentence1": "Can I borrow your pen for a minute?",
-    "Meaning1": "借（东西）", "SentenceCN1": "能借你的笔用一分钟吗？",
+    "Meaning1": "借（东西）", "SentenceCN1": "能【借】你的笔用一分钟吗？",
     "Analysis1": "borrow + 东西：从别人那里借来，常与 from 连用。",
     "Sentence2": "She borrowed some money from her brother.",
-    "Meaning2": "借（钱）", "SentenceCN2": "她向她哥哥借了些钱。",
+    "Meaning2": "借（钱）", "SentenceCN2": "她向她哥哥【借】了些钱。",
     "Analysis2": "borrow money from sb：钱是从别人那里借来的。",
     "Sentence3": "We borrow books from the library every week.",
-    "Meaning3": "借阅（书）", "SentenceCN3": "我们每周都从图书馆借书。",
+    "Meaning3": "借阅（书）", "SentenceCN3": "我们每周都从图书馆【借】书。",
     "Analysis3": "borrow books：图书馆借书是最常见的搭配。"
   }]
 }, ensure_ascii=False, indent=2))
@@ -105,11 +106,11 @@ def rewrite_note(word="incur"):
     return {
         "Word": word, "IPA": "/ɪnˈkɜːr/", "ChineseCore": "v. 招致，蒙受（损失、费用）", "Theme": "bauhaus",
         "Sentence1": "If we are late, we may incur a small fine.", "Meaning1": "招致（罚款）",
-        "SentenceCN1": "如果我们迟到，可能要被罚一笔小钱。", "Analysis1": "incur a fine：招致罚款。",
+        "SentenceCN1": "如果我们迟到，可能就【招致】一笔小罚款。", "Analysis1": "incur a fine：招致罚款。",
         "Sentence2": "We may incur more costs if we change the plan.", "Meaning2": "带来（额外成本）",
-        "SentenceCN2": "如果改计划，我们可能要花更多的钱。", "Analysis2": "incur costs：带来成本。",
+        "SentenceCN2": "如果改计划，我们可能【带来】更多花费。", "Analysis2": "incur costs：带来成本。",
         "Sentence3": "If you pay late, you may incur a fine.", "Meaning3": "产生（费用）",
-        "SentenceCN3": "如果你晚付款，就可能要付一笔费用。", "Analysis3": "incur a fee：产生费用。"
+        "SentenceCN3": "如果你晚付款，就可能【产生】一笔费用。", "Analysis3": "incur a fee：产生费用。"
     }
 (T/"rewrite_ok.json").write_text(json.dumps({
     "modelName": "微语境闪卡 1.0", "deckName": "测试::anki-flashcard验收", "notes": [rewrite_note()]}, ensure_ascii=False))
@@ -117,11 +118,11 @@ ghost = rewrite_note("ghostword")
 ghost.update({
     "IPA": "/ˈɡoʊstwɜːrd/", "ChineseCore": "n. 幽灵词（验收夹具）",
     "Sentence1": "Please ghostword the file before the meeting.", "Meaning1": "幽灵用法一",
-    "SentenceCN1": "开会前请幽灵一下这个文件。", "Analysis1": "ghostword sth：验收用假搭配。",
+    "SentenceCN1": "开会前请【幽灵】一下这个文件。", "Analysis1": "ghostword sth：验收用假搭配。",
     "Sentence2": "We ghostword the plan again next week.", "Meaning2": "幽灵用法二",
-    "SentenceCN2": "我们下周再幽灵一下计划。", "Analysis2": "ghostword the plan：验收用假搭配。",
+    "SentenceCN2": "我们下周再【幽灵】一下计划。", "Analysis2": "ghostword the plan：验收用假搭配。",
     "Sentence3": "They always ghostword the box in the morning.", "Meaning3": "幽灵用法三",
-    "SentenceCN3": "他们总是在早上幽灵那个箱子。", "Analysis3": "ghostword the box：验收用假搭配。"})
+    "SentenceCN3": "他们总是在早上【幽灵】那个箱子。", "Analysis3": "ghostword the box：验收用假搭配。"})
 (T/"rewrite_ghost.json").write_text(json.dumps({
     "modelName": "微语境闪卡 1.0", "deckName": "测试::anki-flashcard验收", "notes": [ghost]}, ensure_ascii=False))
 print("fixtures written to", T)
@@ -157,15 +158,15 @@ cat > "$FIXTURE_JSON" <<'JSON'
     "Word": "incur", "IPA": "/ɪnˈkɜːr/", "ChineseCore": "v. 招致，蒙受（损失、费用）", "Theme": "bauhaus",
     "Sentence1": "If we are late, we may incur a small fine.",
     "Meaning1": "招致（罚款）",
-    "SentenceCN1": "如果我们迟到，可能要被罚一笔小钱。",
+    "SentenceCN1": "如果我们迟到，可能就【招致】一笔小罚款。",
     "Analysis1": "incur a fine：招致罚款，主语通常是承担责任的一方。",
     "Sentence2": "We may incur more costs if we change the plan.",
     "Meaning2": "带来（额外成本）",
-    "SentenceCN2": "如果改计划，我们可能要花更多的钱。",
+    "SentenceCN2": "如果改计划，我们可能【带来】更多花费。",
     "Analysis2": "incur costs：带来成本，比 spend 更强调\"因某事而承担\"。",
     "Sentence3": "If you pay late, you may incur a fee.",
     "Meaning3": "产生（费用）",
-    "SentenceCN3": "如果你晚付款，就可能要付一笔费用。",
+    "SentenceCN3": "如果你晚付款，就可能【产生】一笔费用。",
     "Analysis3": "incur a fee：产生手续费、滞纳金等。"
   }]
 }
@@ -259,6 +260,7 @@ check "wrong part of speech is flagged"      "与 ECDICT 对该词的标注不�
 check "a mismatched IPA is flagged"          "与 ECDICT 音标"             node "$S/scripts/import-vocabulary.mjs" "$T/bad_lexicon.json" --dry-run --without-tts
 check "dry-run carries the sense list"       '"dictionary"'               node "$S/scripts/import-vocabulary.mjs" "$T/ok.json" --dry-run --without-tts
 check_absent "a correct card stays quiet"    'ECDICT'                     node "$S/scripts/import-vocabulary.mjs" "$T/ok.json" --dry-run --without-tts
+check "a missing gloss marker is flagged"      "需要恰好一处"   node "$S/scripts/import-vocabulary.mjs" "$T/no_mark.json" --dry-run --without-tts
 check "irregular table covers ECDICT forms"  'went,brought,children'      node -e "import('$S/scripts/level-check.mjs').then(async m => { const c = await m.loadCefrList(); console.log(['went','brought','children'].filter((w) => c.allowed.has(w)).join(',')); })"
 
 echo "== 9b. ChineseCore 词典底串（dictionary-first）=="

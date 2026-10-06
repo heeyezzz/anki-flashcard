@@ -1,10 +1,14 @@
 # Context design for retrieval
 
-The front shows the word, its IPA and **one** sentence with the target word highlighted inside it.
-The back adds the meanings, the translation and the analysis. So the useful
-question is not "how many examples can I write" but "which different conditions make me retrieve this
-word". Use three to five `Sentence{i}` groups; each group is a distinct retrieval condition with its
-own one-line `Meaning{i}`.
+The front shows the word, its IPA and **every** sentence at once, each with the target word highlighted
+inside it. The back leads with the whole-word gloss (`ChineseCore`, large) and puts each group's
+translation under its sentence, with the word-for-word equivalent underlined and that group's
+`Meaning{i}` as the tooltip. So the useful question is not "how many examples can I write" but
+"**which different conditions make me retrieve this word**". Use three to five `Sentence{i}` groups;
+each group is a distinct retrieval condition with its own one-line `Meaning{i}`.
+
+Because all contexts are visible in one glance, weak differentiation is now *more* exposed than it was:
+two near-identical rows sit next to each other instead of appearing on separate days.
 
 ## Required qualities
 

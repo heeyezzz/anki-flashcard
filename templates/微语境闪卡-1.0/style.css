@@ -1,0 +1,807 @@
+/*
+微语境闪卡 1.0 · 样式
+背面版式对齐「AI多场景完型 1.0」：单词在上、本次例句居中、其他语境折叠。
+主题：data-theme="" / "minimal" 走经典蓝（下方基础规则）；data-theme="bauhaus" 走包豪斯。
+暗色：Anki 仍在 <body> 上打 .nightMode（已在 Anki 26.9.2 的 reviewer.css 中确认），
+因此这里只覆盖 CSS 变量即可全局生效。
+*/
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --mx-canvas: #eef3f8;
+  --mx-surface: #ffffff;
+  --mx-soft: #f5f8fc;
+  --mx-ink: #17283f;
+  --mx-muted: #64758a;
+  --mx-line: #d7e1ec;
+  --mx-accent: #1768c5;
+  --mx-accent-soft: #e9f2ff;
+  --mx-mark-bg: #fff0b8;
+  --mx-mark-ink: #6b4200;
+  --mx-mark-line: #e0b64a;
+}
+
+.card {
+  margin: 0;
+  padding: 28px 18px;
+  background: var(--mx-canvas);
+  color: var(--mx-ink);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "PingFang SC", sans-serif;
+  text-align: left;
+}
+
+.mctx-card {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: clamp(22px, 4.6vw, 38px);
+  border-radius: 16px;
+  background: var(--mx-surface);
+  box-shadow: 0 14px 38px rgba(31, 57, 87, 0.09);
+}
+
+.mctx-card [hidden] {
+  display: none !important;
+}
+
+.mctx-audio {
+  display: none;
+}
+
+::selection {
+  background: var(--mx-accent-soft);
+  color: var(--mx-ink);
+}
+
+/* ---------- 句子 ---------- */
+.mctx-stage,
+.mctx-recap {
+  padding: 12px 24px 24px;
+  border: 1px solid var(--mx-line);
+  border-radius: 15px;
+  background: var(--mx-soft);
+}
+
+/* 正面是"检索"面，留更多呼吸空间让人盯着句子回忆；
+   发音按钮与背面「本次例句」面板一样走抬头行右侧（.mctx-recap-head），不再绝对定位 */
+.mctx-card--front .mctx-stage {
+  padding: 12px clamp(26px, 4vw, 40px) clamp(26px, 4vw, 40px);
+}
+
+.mctx-sentence {
+  margin: 0;
+  color: var(--mx-ink);
+  font-size: clamp(19px, 2.7vw, 25px);
+  font-weight: 600;
+  line-height: 1.62;
+  overflow-wrap: anywhere;
+}
+
+.mctx-card--back .mctx-sentence {
+  font-size: clamp(17px, 2.2vw, 20px);
+  line-height: 1.55;
+  font-weight: 560;
+}
+
+.target-word {
+  padding: 0.04em 0.2em;
+  border-bottom: 2px solid var(--mx-mark-line);
+  border-radius: 5px;
+  background: var(--mx-mark-bg);
+  color: var(--mx-mark-ink);
+  font-weight: 800;
+}
+
+.mctx-empty {
+  margin: 16px 0 0;
+  padding: 14px 16px;
+  border: 1px dashed var(--mx-line);
+  border-radius: 12px;
+  color: var(--mx-muted);
+  font-size: 14px;
+}
+
+/* ---------- 背面 1：单词 + 本句义 ---------- */
+.mctx-definition {
+  display: grid;
+  gap: 4px;
+  margin: 0 2px 18px;
+}
+
+.mctx-wordline {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  min-width: 0;
+}
+
+.mctx-word {
+  color: var(--mx-ink);
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.mctx-ipa {
+  color: var(--mx-muted);
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+
+/* 第一焦点：全局释义 ChineseCore —— 大字号 + 强调底色 + 左侧色条 */
+.mctx-core-meaning {
+  margin: 10px 0 0;
+  padding: 10px 16px;
+  border-left: 4px solid var(--mx-accent);
+  border-radius: 0 10px 10px 0;
+  background: var(--mx-accent-soft);
+  color: var(--mx-accent);
+  font-size: clamp(20px, 2.6vw, 26px);
+  font-weight: 800;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* 每行语境：中文翻译（【…】渲染成下划线，悬停显示本句义）与搭配解析 */
+.mctx-gloss-cn {
+  margin: 6px 0 0;
+  color: var(--mx-ink);
+  font-size: 16px;
+  font-weight: 560;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+
+.mctx-gloss {
+  text-decoration: underline;
+  text-decoration-color: var(--mx-accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+  color: var(--mx-accent);
+  font-weight: 700;
+  cursor: help;
+}
+
+.mctx-analysis {
+  margin: 6px 0 0;
+  color: var(--mx-muted);
+  font-size: 14px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.mctx-core-label {
+  display: inline-block;
+  margin-right: 0.55em;
+  padding: 1px 8px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+/* ---------- 背面 2：本次例句 ---------- */
+.mctx-recap-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.mctx-answer-label {
+  color: var(--mx-muted);
+  font-size: 12px;
+  font-weight: 760;
+  letter-spacing: 0.08em;
+}
+
+.mctx-slots {
+  min-width: 0;
+}
+
+.mctx-recap-copy {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--mx-line);
+}
+
+.mctx-recap-copy h2 {
+  margin: 0 0 7px;
+  color: var(--mx-ink);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.mctx-recap-copy p {
+  margin: 0;
+  color: var(--mx-muted);
+  font-size: 15px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.mctx-extra {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--mx-line);
+}
+
+.mctx-extra summary {
+  color: var(--mx-muted);
+  font-size: 13px;
+  font-weight: 760;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.mctx-extra p {
+  margin: 10px 0 0;
+  color: var(--mx-muted);
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- 背面 3：本词储备的其他语境 ---------- */
+.mctx-more {
+  margin-top: 20px;
+  border: 1px solid var(--mx-line);
+  border-radius: 13px;
+  background: var(--mx-surface);
+}
+
+.mctx-more summary {
+  padding: 15px 18px;
+  color: var(--mx-accent);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mctx-more summary:focus-visible,
+.mctx-extra summary:focus-visible {
+  outline: 3px solid rgba(23, 104, 197, 0.22);
+  outline-offset: 2px;
+}
+
+.mctx-other-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0 20px 8px;
+  list-style: none;
+}
+
+.mctx-other-item {
+  display: grid;
+  gap: 7px;
+  padding: 14px 0 16px;
+  color: var(--mx-ink);
+  overflow-wrap: anywhere;
+}
+
+.mctx-other-item + .mctx-other-item {
+  border-top: 1px solid var(--mx-line);
+}
+
+.mctx-other-heading {
+  display: grid;
+  /* Scene 字段已删除，头部只剩「序号 + 播放按钮」，按钮靠右 */
+  grid-template-columns: 2.4ch minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mctx-other-index {
+  font-variant-numeric: tabular-nums;
+}
+
+.mctx-other-item .mctx-sentence {
+  display: block;
+  max-width: 58ch;
+  font-size: 17px;
+  font-weight: 560;
+  line-height: 1.5;
+}
+
+/* ---------- 音频按钮 ---------- */
+.mctx-audio-btn {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--mx-line);
+  border-radius: 50%;
+  background: var(--mx-surface);
+  color: var(--mx-muted);
+  cursor: pointer;
+  transition: color 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.mctx-audio-btn svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
+}
+
+.mctx-audio-btn:hover,
+.mctx-audio-btn.is-playing {
+  border-color: var(--mx-accent);
+  background: var(--mx-accent-soft);
+  color: var(--mx-accent);
+}
+
+.mctx-audio-btn:focus-visible {
+  outline: 3px solid rgba(23, 104, 197, 0.26);
+  outline-offset: 2px;
+}
+
+.mctx-audio-btn--word {
+  align-self: center;
+  margin-left: -4px;
+}
+
+.mctx-audio-btn--other {
+  width: 24px;
+  height: 24px;
+  justify-self: end;
+}
+
+.mctx-audio-btn--other svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* ---------- 暗色模式 ---------- */
+.nightMode {
+  --mx-canvas: #151d27;
+  --mx-surface: #1c2734;
+  --mx-soft: #202d3b;
+  --mx-ink: #edf4fc;
+  --mx-muted: #b5c5d7;
+  --mx-line: #3a4c60;
+  --mx-accent: #7bbaff;
+  --mx-accent-soft: #203f61;
+  --mx-mark-bg: #4a3d12;
+  --mx-mark-ink: #ffe9a3;
+  --mx-mark-line: #8a7326;
+}
+
+.nightMode .mctx-card {
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.22);
+}
+
+/* ---------- 包豪斯主题 ---------- */
+.theme-bauhaus {
+  --bh-paper: #f6f0e2;
+  --bh-ink: #161616;
+  --bh-red: #d8202a;
+  --bh-blue: #0757a8;
+  --bh-yellow: #f5c542;
+  /* 卡片内边距（角上的红圆/黄方按它缩放，保证永远落在内边距里、不压面板边框） */
+  --bh-pad-tb: clamp(26px, 4.6vw, 56px);
+  --bh-pad-lr: clamp(26px, 4.6vw, 56px);
+  position: relative;
+  max-width: 900px;
+  padding: var(--bh-pad-tb) var(--bh-pad-lr);
+  overflow: hidden;
+  border: 2px solid var(--bh-ink);
+  border-radius: 0;
+  background: var(--bh-paper);
+  color: var(--bh-ink);
+  font-family: Futura, "Avenir Next", "Noto Sans SC", sans-serif;
+  box-shadow: 12px 12px 0 var(--bh-blue);
+}
+
+.theme-bauhaus::before,
+.theme-bauhaus::after {
+  position: absolute;
+  z-index: 0;
+  content: "";
+  pointer-events: none;
+}
+
+.theme-bauhaus::before {
+  top: -58px;
+  right: -52px;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: var(--bh-red);
+}
+
+.theme-bauhaus::after {
+  right: 26px;
+  bottom: 26px;
+  width: 70px;
+  height: 70px;
+  background: var(--bh-yellow);
+}
+
+/* 正面：唯一的满宽面板会一直顶到卡片内边距边界，背面那种「大方块盖在角上」会压住边框线，
+   所以正面把两个角饰整体缩进内边距里 —— 同样是红圆 + 黄方，只是都退到面板之外。 */
+.theme-bauhaus.mctx-card--front::before {
+  width: calc(var(--bh-pad-tb) * 2.6);
+  height: calc(var(--bh-pad-tb) * 2.6);
+  top: calc(var(--bh-pad-tb) * -1.78);
+  right: calc(var(--bh-pad-lr) * -1.78);
+}
+
+.theme-bauhaus.mctx-card--front::after {
+  width: calc(var(--bh-pad-lr) * 0.62);
+  height: calc(var(--bh-pad-lr) * 0.62);
+  right: 3px;
+  bottom: 3px;
+}
+
+.theme-bauhaus > * {
+  position: relative;
+  z-index: 1;
+}
+
+.theme-bauhaus .mctx-stage,
+.theme-bauhaus .mctx-recap {
+  padding: 12px clamp(22px, 3.4vw, 40px) clamp(22px, 3.4vw, 40px);
+  border: 2px solid var(--bh-ink);
+  border-top: 12px solid var(--bh-blue);
+  border-radius: 0;
+  background: var(--bh-paper);
+}
+
+.theme-bauhaus .mctx-recap {
+  border-top-color: var(--bh-yellow);
+}
+
+/* 正面面板 = 背面「本次例句」面板的同一块板：同色顶条、同样的内边距阶梯 */
+.theme-bauhaus.mctx-card--front .mctx-stage {
+  padding: 12px clamp(20px, 3.4vw, 34px) clamp(20px, 3.4vw, 34px);
+  border-top-color: var(--bh-yellow);
+}
+
+.theme-bauhaus.mctx-card--front .mctx-recap-head {
+  margin-bottom: 14px;
+}
+
+.theme-bauhaus .mctx-sentence {
+  max-width: 30ch;
+  color: var(--bh-ink);
+  font-size: clamp(21px, 3vw, 33px);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+.theme-bauhaus.mctx-card--back .mctx-sentence {
+  max-width: 44ch;
+  font-size: clamp(19px, 2.4vw, 26px);
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.theme-bauhaus .target-word {
+  padding: 0.02em 0.14em;
+  border: 2px solid var(--bh-ink);
+  border-radius: 0;
+  background: var(--bh-yellow);
+  color: var(--bh-ink);
+  font-weight: 800;
+}
+
+.theme-bauhaus .mctx-empty {
+  border: 2px dashed var(--bh-ink);
+  border-radius: 0;
+  color: var(--bh-ink);
+}
+
+.theme-bauhaus .mctx-definition {
+  display: inline-block;
+  min-width: min(100%, 520px);
+  margin-bottom: 26px;
+  padding: 18px 22px;
+  border: 2px solid var(--bh-ink);
+  border-top: 12px solid var(--bh-red);
+  background: var(--bh-paper);
+}
+
+.theme-bauhaus .mctx-word {
+  color: var(--bh-ink);
+  font-size: clamp(34px, 4.6vw, 56px);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.theme-bauhaus .mctx-ipa {
+  color: var(--bh-ink);
+  font-size: 16px;
+}
+
+.theme-bauhaus .mctx-core-meaning {
+  margin-top: 14px;
+  padding: 10px 16px;
+  border: 2px solid var(--bh-ink);
+  border-left: 10px solid var(--bh-red);
+  border-radius: 0;
+  background: #fff8e9;
+  color: var(--bh-ink);
+  font-size: clamp(19px, 2.4vw, 25px);
+  font-weight: 800;
+}
+
+.theme-bauhaus .mctx-gloss-cn {
+  color: var(--bh-ink);
+}
+
+.theme-bauhaus .mctx-gloss {
+  text-decoration-color: var(--bh-red);
+  color: var(--bh-red);
+}
+
+.theme-bauhaus .mctx-analysis {
+  color: var(--bh-ink);
+  font-size: 13px;
+  opacity: 0.78;
+}
+
+.theme-bauhaus .mctx-core-label {
+  padding: 1px 7px;
+  border: 2px solid var(--bh-ink);
+  border-radius: 0;
+  background: var(--bh-yellow);
+  color: var(--bh-ink);
+}
+
+.theme-bauhaus .mctx-answer-label {
+  color: var(--bh-blue);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+}
+
+.theme-bauhaus .mctx-recap-copy,
+.theme-bauhaus .mctx-extra {
+  border-top: 2px solid var(--bh-ink);
+}
+
+.theme-bauhaus .mctx-recap-copy h2,
+.theme-bauhaus .mctx-extra summary {
+  color: var(--bh-red);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+}
+
+.theme-bauhaus .mctx-recap-copy p,
+.theme-bauhaus .mctx-extra p {
+  color: var(--bh-ink);
+}
+
+.theme-bauhaus .mctx-more {
+  margin-top: 24px;
+  border: 2px solid var(--bh-ink);
+  border-radius: 0;
+  background: var(--bh-paper);
+}
+
+.theme-bauhaus .mctx-more summary {
+  color: var(--bh-ink);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.theme-bauhaus .mctx-other-list {
+  border-top: 2px solid var(--bh-ink);
+}
+
+.theme-bauhaus .mctx-other-item + .mctx-other-item {
+  border-top: 1px solid var(--bh-ink);
+}
+
+.theme-bauhaus .mctx-other-index {
+  color: var(--bh-red);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.theme-bauhaus .mctx-other-item .mctx-sentence {
+  max-width: 44ch;
+  color: var(--bh-ink);
+  font-size: clamp(18px, 2.05vw, 23px);
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.theme-bauhaus .mctx-audio-btn {
+  border: 2px solid var(--bh-ink);
+  border-radius: 0;
+  background: var(--bh-yellow);
+  color: var(--bh-ink);
+}
+
+.theme-bauhaus .mctx-audio-btn:hover,
+.theme-bauhaus .mctx-audio-btn.is-playing {
+  background: var(--bh-red);
+  color: var(--bh-paper);
+}
+
+.theme-bauhaus .mctx-audio-btn:focus-visible,
+.theme-bauhaus .mctx-more summary:focus-visible,
+.theme-bauhaus .mctx-extra summary:focus-visible {
+  outline: 3px solid var(--bh-blue);
+  outline-offset: 3px;
+}
+
+.nightMode .theme-bauhaus {
+  background: #181818;
+  color: #f6f0e2;
+  border-color: #f6f0e2;
+  box-shadow: 12px 12px 0 var(--bh-red);
+}
+
+.nightMode .theme-bauhaus .mctx-stage,
+.nightMode .theme-bauhaus .mctx-recap,
+.nightMode .theme-bauhaus .mctx-definition,
+.nightMode .theme-bauhaus .mctx-more {
+  background: #181818;
+  border-color: #f6f0e2;
+}
+
+.nightMode .theme-bauhaus .mctx-sentence,
+.nightMode .theme-bauhaus .mctx-word,
+.nightMode .theme-bauhaus .mctx-ipa,
+.nightMode .theme-bauhaus .mctx-core-meaning,
+.nightMode .theme-bauhaus .mctx-more summary,
+.nightMode .theme-bauhaus .mctx-recap-copy h2,
+.nightMode .theme-bauhaus .mctx-recap-copy p,
+.nightMode .theme-bauhaus .mctx-extra summary,
+.nightMode .theme-bauhaus .mctx-extra p,
+.nightMode .theme-bauhaus .mctx-other-item,
+.nightMode .theme-bauhaus .target-word {
+  border-color: #f6f0e2;
+  background: var(--bh-yellow);
+  color: #181818;
+}
+
+.nightMode .theme-bauhaus .mctx-recap-copy,
+.nightMode .theme-bauhaus .mctx-extra,
+.nightMode .theme-bauhaus .mctx-other-list,
+.nightMode .theme-bauhaus .mctx-other-item + .mctx-other-item {
+  border-color: #f6f0e2;
+}
+
+/* 暗色 + 包豪斯：全局释义块换成深底，避免浅色 #fff8e9 在暗色下刺眼 */
+.nightMode .theme-bauhaus .mctx-core-meaning {
+  background: #221d10;
+  color: #f6f0e2;
+  border-color: #f6f0e2;
+  border-left-color: var(--bh-red);
+}
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 560px) {
+  .card {
+    padding: 12px 9px;
+  }
+
+  .mctx-card {
+    padding: 20px 15px;
+    border-radius: 13px;
+  }
+
+  .mctx-stage,
+  .mctx-recap {
+    padding: 12px 16px 18px;
+    border-radius: 12px;
+  }
+
+  .mctx-sentence {
+    font-size: 19px;
+  }
+
+  .mctx-word {
+    font-size: 28px;
+  }
+
+  .mctx-other-list {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .mctx-other-item .mctx-sentence {
+    font-size: 16px;
+  }
+
+  .theme-bauhaus {
+    padding: 22px 16px 34px;
+    box-shadow: 7px 7px 0 var(--bh-blue);
+  }
+
+  .theme-bauhaus::before {
+    top: -46px;
+    right: -42px;
+    width: 120px;
+    height: 120px;
+  }
+
+  .theme-bauhaus::after {
+    right: 16px;
+    bottom: 16px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .theme-bauhaus .mctx-stage,
+  .theme-bauhaus .mctx-recap {
+    padding: 12px 16px 20px;
+    border-top-width: 10px;
+  }
+
+  .theme-bauhaus .mctx-definition {
+    padding: 14px 16px;
+  }
+
+  .theme-bauhaus .mctx-sentence {
+    font-size: 22px;
+  }
+
+  .theme-bauhaus.mctx-card--back .mctx-sentence {
+    font-size: 19px;
+  }
+
+  .theme-bauhaus .mctx-word {
+    font-size: clamp(32px, 9vw, 40px);
+  }
+
+  .theme-bauhaus .mctx-other-item .mctx-sentence {
+    font-size: 18px;
+  }
+
+  /* 窄屏正面：面板必然满宽，没有侧向留白放角饰，
+     于是把上/下内边距让出来，让红圆、黄方各自待在面板上下方的留白里。 */
+  .theme-bauhaus.mctx-card--front {
+    padding: 48px 16px 54px;
+  }
+
+  .theme-bauhaus.mctx-card--front::before {
+    width: 96px;
+    height: 96px;
+    top: -58px;
+    right: -30px;
+  }
+
+  .theme-bauhaus.mctx-card--front::after {
+    width: 34px;
+    height: 34px;
+    right: 3px;
+    bottom: 3px;
+  }
+
+  .theme-bauhaus.mctx-card--front .mctx-stage {
+    padding: 12px 14px 18px;
+    border-top-width: 10px;
+  }
+
+  .theme-bauhaus.mctx-card--front .mctx-recap-head {
+    margin-bottom: 12px;
+  }
+
+  .theme-bauhaus.mctx-card--front .mctx-sentence {
+    font-size: 21px;
+    line-height: 1.32;
+  }
+}
+
+/* 2026-09-20 by Hermes：本次例句面板上留白收紧为 12px */

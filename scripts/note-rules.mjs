@@ -25,7 +25,9 @@ export const ALL_NOTE_FIELDS = [
 // WordAudio replaces AudioWord; this note type never uses AudioWordAuto or AudioMediaRefs.
 export const AUDIO_FIELDS = ["WordAudio", ...Array.from({ length: 5 }, (_, index) => `AudioSentence${index + 1}`)];
 export const FULL_POS_WORD = /^(nouns?|verbs?|adjectives?|adverbs?|prepositions?|pronouns?|conjunctions?|determiners?|articles?|phrases?)\b/i;
-export const MARKUP = /\{\{|\}\}|\[sound:|<\/?[a-z][^>]*>/i;
+export const MARKUP = /\{\{|\}\}|\[sound:|【|】|<\/?[a-z][^>]*>/i;
+// 背面译文下划线靠 SentenceCN 里恰好一处【…】标记（模板把【x】渲染成 <u>x</u>，悬停显示同组 Meaning）。
+export const GLOSS_MARK = /【[^】]*】/g;
 export const CJK = /[\u3400-\u9fff]/;
 export const MAX_SENTENCE_CHARS = 160;
 export const MIN_SENTENCE_WORDS = 5;
@@ -172,6 +174,12 @@ export const validateNote = (note, noteIndex, ctx) => {
     }
     assert(CJK.test(note[`Meaning${index}`]), `notes[${noteIndex}].Meaning${index} must contain Chinese (本句语境义).`);
     assert(CJK.test(note[`SentenceCN${index}`]), `notes[${noteIndex}].SentenceCN${index} must contain Chinese (整句中文翻译).`);
+    const cn = note[`SentenceCN${index}`];
+    const marks = cn.match(GLOSS_MARK) || [];
+    const unbalanced = (cn.match(/【/g) || []).length !== (cn.match(/】/g) || []).length;
+    if (unbalanced || marks.length !== 1 || marks[0] === "【】") {
+      warnings.push(`notes[${noteIndex}].SentenceCN${index} 需要恰好一处【…】来标出目标词对应的译词（背面的下划线和悬停释义都靠它渲染）：${unbalanced ? "括号不成对" : `找到 ${marks.length} 处`}。`);
+    }
     if (!CJK.test(note[`Analysis${index}`])) warnings.push(`notes[${noteIndex}].Analysis${index} has no Chinese; 搭配解析 is normally written in Chinese.`);
     contexts.push({
       index,

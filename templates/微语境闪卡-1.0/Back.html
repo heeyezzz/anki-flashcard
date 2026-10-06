@@ -1,0 +1,359 @@
+<!--
+  微语境闪卡 · 背面
+  结构：
+    1) 词头（Word + 音标 + 发音）+ **全局释义 ChineseCore（第一焦点，大字）**
+    2) 全部例句与翻译：每行 = 英文原句（目标词高亮）+ 中文翻译（目标词对应的译词加下划线）
+       + 搭配解析。下划线鼠标悬停/长按显示该句的语境义 Meaning。
+    3) 其他义项（折叠）
+  正面已改为一次显示全部例句，所以不再有「本次那一句」，也没有需要跨面对齐的随机状态。
+
+  译文里的下划线来源是字段内的成对标记：SentenceCN 写成「她在寒风里【发抖】，…」，
+  由本脚本把【…】渲染成 <u>（走 DOM，不做 innerHTML 拼接），并把同组 Meaning 挂成提示文本。
+-->
+<main class="mctx-card mctx-card--back" data-theme="{{text:Theme}}">
+  <span id="mctx-word-key" hidden>{{text:Word}}</span>
+  <span id="mctx-word-audio-path" hidden>{{WordAudio}}</span>
+  <span id="mctx-other-meanings" hidden>{{OtherMeanings}}</span>
+
+  <section class="mctx-definition" aria-label="核心单词信息">
+    <div class="mctx-wordline">
+      <span class="mctx-word" id="mctx-word">{{Word}}</span>
+      {{#IPA}}<span class="mctx-ipa">{{IPA}}</span>{{/IPA}}
+      <button class="mctx-audio-btn mctx-audio-btn--word" id="mctx-play-word" type="button" hidden
+              aria-label="播放单词发音" title="播放单词发音">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4Z"></path><path d="M16 9.5a4 4 0 0 1 0 5"></path><path d="M18.8 6.8a8 8 0 0 1 0 10.4"></path></svg>
+      </button>
+    </div>
+    <p class="mctx-core-meaning" id="mctx-core-meaning">
+      <span class="mctx-core-label">全局释义</span>
+      <span id="mctx-core-text">{{ChineseCore}}</span>
+    </p>
+  </section>
+
+  <section class="mctx-recap" id="mctx-recap" aria-label="例句与翻译" style="padding-top:12px">
+    <div class="mctx-recap-head">
+      <div class="mctx-answer-label">例句与翻译</div>
+    </div>
+
+    <ol class="mctx-other-list mctx-slot-list">
+      <li class="mctx-other-item mctx-slot" data-i="1">
+        <div class="mctx-other-heading">
+          <span class="mctx-other-index">01</span>
+          <button class="mctx-audio-btn" type="button" hidden aria-label="播放本句发音" title="播放本句发音">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4Z"></path><path d="M16 9.5a4 4 0 0 1 0 5"></path><path d="M18.8 6.8a8 8 0 0 1 0 10.4"></path></svg>
+          </button>
+        </div>
+        <p class="mctx-sentence">{{Sentence1}}</p>
+        <p class="mctx-gloss-cn">{{SentenceCN1}}</p>
+        <p class="mctx-analysis">{{Analysis1}}</p>
+        <span class="mctx-path" hidden>{{AudioSentence1}}</span>
+        <span class="mctx-meaning-src" hidden>{{Meaning1}}</span>
+      </li>
+      <li class="mctx-other-item mctx-slot" data-i="2">
+        <div class="mctx-other-heading">
+          <span class="mctx-other-index">02</span>
+          <button class="mctx-audio-btn" type="button" hidden aria-label="播放本句发音" title="播放本句发音">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4Z"></path><path d="M16 9.5a4 4 0 0 1 0 5"></path><path d="M18.8 6.8a8 8 0 0 1 0 10.4"></path></svg>
+          </button>
+        </div>
+        <p class="mctx-sentence">{{Sentence2}}</p>
+        <p class="mctx-gloss-cn">{{SentenceCN2}}</p>
+        <p class="mctx-analysis">{{Analysis2}}</p>
+        <span class="mctx-path" hidden>{{AudioSentence2}}</span>
+        <span class="mctx-meaning-src" hidden>{{Meaning2}}</span>
+      </li>
+      <li class="mctx-other-item mctx-slot" data-i="3">
+        <div class="mctx-other-heading">
+          <span class="mctx-other-index">03</span>
+          <button class="mctx-audio-btn" type="button" hidden aria-label="播放本句发音" title="播放本句发音">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4Z"></path><path d="M16 9.5a4 4 0 0 1 0 5"></path><path d="M18.8 6.8a8 8 0 0 1 0 10.4"></path></svg>
+          </button>
+        </div>
+        <p class="mctx-sentence">{{Sentence3}}</p>
+        <p class="mctx-gloss-cn">{{SentenceCN3}}</p>
+        <p class="mctx-analysis">{{Analysis3}}</p>
+        <span class="mctx-path" hidden>{{AudioSentence3}}</span>
+        <span class="mctx-meaning-src" hidden>{{Meaning3}}</span>
+      </li>
+      <li class="mctx-other-item mctx-slot" data-i="4">
+        <div class="mctx-other-heading">
+          <span class="mctx-other-index">04</span>
+          <button class="mctx-audio-btn" type="button" hidden aria-label="播放本句发音" title="播放本句发音">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4Z"></path><path d="M16 9.5a4 4 0 0 1 0 5"></path><path d="M18.8 6.8a8 8 0 0 1 0 10.4"></path></svg>
+          </button>
+        </div>
+        <p class="mctx-sentence">{{Sentence4}}</p>
+        <p class="mctx-gloss-cn">{{SentenceCN4}}</p>
+        <p class="mctx-analysis">{{Analysis4}}</p>
+        <span class="mctx-path" hidden>{{AudioSentence4}}</span>
+        <span class="mctx-meaning-src" hidden>{{Meaning4}}</span>
+      </li>
+      <li class="mctx-other-item mctx-slot" data-i="5">
+        <div class="mctx-other-heading">
+          <span class="mctx-other-index">05</span>
+          <button class="mctx-audio-btn" type="button" hidden aria-label="播放本句发音" title="播放本句发音">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4Z"></path><path d="M16 9.5a4 4 0 0 1 0 5"></path><path d="M18.8 6.8a8 8 0 0 1 0 10.4"></path></svg>
+          </button>
+        </div>
+        <p class="mctx-sentence">{{Sentence5}}</p>
+        <p class="mctx-gloss-cn">{{SentenceCN5}}</p>
+        <p class="mctx-analysis">{{Analysis5}}</p>
+        <span class="mctx-path" hidden>{{AudioSentence5}}</span>
+        <span class="mctx-meaning-src" hidden>{{Meaning5}}</span>
+      </li>
+    </ol>
+
+    <details class="mctx-extra" id="mctx-extra">
+      <summary>其他义项</summary>
+      <p id="mctx-other-meanings-text"></p>
+    </details>
+  </section>
+
+  <p class="mctx-empty" id="mctx-empty" hidden>这张笔记还没有填写任何例句，请补全 Sentence1~5 字段。</p>
+
+  <audio class="mctx-audio" id="mctx-word-audio" preload="none"></audio>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  /* #region pattern */
+  // 与 front.html 完全一致，改一处要同步两处。
+  const mctxPattern = (word) => {
+    const w = String(word == null ? "" : word).trim();
+    if (!w) return null;
+    const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (/\s/.test(w)) {
+      return new RegExp("\\b" + w.split(/\s+/).map(esc).join("[\\s\\-]+") + "\\b", "gi");
+    }
+    const low = w.toLowerCase();
+    const forms = new Set([w]);
+    if (/y$/.test(low)) {
+      const stem = w.slice(0, -1);
+      forms.add(stem + "ies");
+      forms.add(stem + "ied");
+      forms.add(stem + "ying");
+    }
+    if (/e$/.test(low)) {
+      forms.add(w + "d");
+      forms.add(w.slice(0, -1) + "ing");
+    }
+    if (/[^aeiouy]$/i.test(low)) {
+      forms.add(w + w.slice(-1) + "ed");
+      forms.add(w + w.slice(-1) + "ing");
+    }
+    forms.add(w + "s");
+    forms.add(w + "es");
+    forms.add(w + "ed");
+    forms.add(w + "ing");
+    const alts = [...forms].sort((a, b) => b.length - a.length).map(esc);
+    return new RegExp("\\b(?:" + alts.join("|") + ")\\b", "gi");
+  };
+  /* #endregion pattern */
+
+  /* #region mark */
+  // 通用：在文本节点上按正则包一层指定元素，全程走 DOM，不拼 innerHTML。
+  const mctxWrap = (root, source, makeNode) => {
+    if (!root || !source) return 0;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    const nodes = [];
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (node.nodeValue && node.parentNode && node.parentNode.nodeName !== "U") nodes.push(node);
+    }
+    let hits = 0;
+    nodes.forEach((node) => {
+      const text = node.nodeValue;
+      source.lastIndex = 0;
+      if (!source.test(text)) return;
+      source.lastIndex = 0;
+      const frag = document.createDocumentFragment();
+      let last = 0;
+      let m;
+      while ((m = source.exec(text)) !== null) {
+        if (!m[0].length) { source.lastIndex += 1; continue; }
+        if (m.index > last) frag.append(text.slice(last, m.index));
+        frag.append(makeNode(m[1] !== undefined ? m[1] : m[0]));
+        last = m.index + m[0].length;
+        hits += 1;
+      }
+      if (last < text.length) frag.append(text.slice(last));
+      node.parentNode.replaceChild(frag, node);
+    });
+    return hits;
+  };
+
+  const highlightTarget = (root, pattern) => mctxWrap(root, pattern, (value) => {
+    const mark = document.createElement("mark");
+    mark.className = "target-word";
+    mark.textContent = value;
+    return mark;
+  });
+
+  // 译文里的【…】→ 下划线；同组 Meaning 作为悬停/焦点提示。
+  const GLOSS = /【([^】]+)】/g;
+  const markGloss = (root, meaning) => mctxWrap(root, GLOSS, (value) => {
+    const u = document.createElement("u");
+    u.className = "mctx-gloss";
+    u.textContent = value;
+    if (meaning) {
+      u.setAttribute("title", meaning);
+      u.setAttribute("aria-label", "本句释义：" + meaning);
+    }
+    return u;
+  });
+  /* #endregion mark */
+
+  /* #region audio */
+  const mctxPlayOnce = (audio, token, state) => new Promise((resolve) => {
+    if (!audio || !audio.getAttribute("src") || token !== state.token) {
+      resolve(false);
+      return;
+    }
+    const onEnd = () => finish(true);
+    const onError = () => finish(false);
+    function finish(ok) {
+      audio.removeEventListener("ended", onEnd);
+      audio.removeEventListener("error", onError);
+      resolve(ok && token === state.token);
+    }
+    audio.addEventListener("ended", onEnd);
+    audio.addEventListener("error", onError);
+    audio.currentTime = 0;
+    const p = audio.play();
+    if (p && typeof p.catch === "function") p.catch(() => finish(false));
+  });
+
+  const bindPlaying = (audio, button) => {
+    if (!audio || !button) return;
+    const on = () => button.classList.add("is-playing");
+    const off = () => button.classList.remove("is-playing");
+    audio.addEventListener("play", on);
+    audio.addEventListener("playing", on);
+    audio.addEventListener("pause", off);
+    audio.addEventListener("ended", off);
+    audio.addEventListener("error", off);
+  };
+  /* #endregion audio */
+
+  const text = (root, sel) => {
+    const el = root.querySelector(sel);
+    return el ? el.textContent.trim() : "";
+  };
+  // 已经拿到元素本身时用这个：text() 需要 (root, selector) 两个参数。
+  const own = (el) => (el ? el.textContent.trim() : "");
+
+  const card = document.querySelector(".mctx-card");
+  if (!card) return;
+  if (String(card.dataset.theme || "").trim().toLowerCase() === "bauhaus") {
+    card.classList.add("theme-bauhaus");
+  }
+
+  const word = text(document, "#mctx-word-key");
+  const slots = [...document.querySelectorAll(".mctx-slot")];
+  const empty = document.getElementById("mctx-empty");
+  const definition = document.querySelector(".mctx-definition");
+  const recap = document.getElementById("mctx-recap");
+
+  // 全局释义是第一焦点：没有它就整块藏掉那一行，不留空标签。
+  const coreBox = document.getElementById("mctx-core-meaning");
+  if (!text(document, "#mctx-core-text")) coreBox.hidden = true;
+
+  const filled = slots.filter((s) => text(s, ".mctx-sentence"));
+  slots.forEach((slot) => { slot.hidden = !text(slot, ".mctx-sentence"); });
+
+  if (!filled.length) {
+    empty.hidden = false;
+    if (definition) definition.hidden = true;
+    if (recap) recap.hidden = true;
+    return;
+  }
+  empty.hidden = true;
+
+  const pattern = mctxPattern(word);
+  const state = { token: 0 };
+  const pool = [];
+  const stopAll = () => {
+    state.token += 1;
+    pool.forEach((audio) => { if (audio) { audio.pause(); audio.currentTime = 0; } });
+  };
+
+  // ---------- 每一行：高亮目标词、渲染译文下划线、接上该行发音 ----------
+  const sentenceAudios = [];
+  filled.forEach((slot) => {
+    highlightTarget(slot.querySelector(".mctx-sentence"), pattern);
+
+    const gloss = slot.querySelector(".mctx-gloss-cn");
+    const meaning = text(slot, ".mctx-meaning-src");
+    if (own(gloss)) {
+      markGloss(gloss, meaning);
+      if (!meaning) gloss.querySelectorAll(".mctx-gloss").forEach((u) => u.removeAttribute("title"));
+    } else {
+      gloss.hidden = true;
+    }
+
+    const analysis = slot.querySelector(".mctx-analysis");
+    if (!own(analysis)) analysis.hidden = true;
+
+    const button = slot.querySelector(".mctx-audio-btn");
+    const path = text(slot, ".mctx-path");
+    if (!path) { button.hidden = true; return; }
+    const audio = new Audio();
+    audio.preload = "none";
+    audio.src = path;
+    pool.push(audio);
+    sentenceAudios.push(audio);
+    button.hidden = false;
+    bindPlaying(audio, button);
+    button.addEventListener("click", () => {
+      stopAll();
+      void mctxPlayOnce(audio, state.token, state);
+    });
+    audio.addEventListener("error", () => { button.hidden = true; });
+  });
+
+  const others = text(document, "#mctx-other-meanings");
+  const extra = document.getElementById("mctx-extra");
+  if (others) document.getElementById("mctx-other-meanings-text").textContent = others;
+  else extra.hidden = true;
+
+  // ---------- 单词发音：按钮 + 参与自动序列 ----------
+  const wordAudio = document.getElementById("mctx-word-audio");
+  const wordButton = document.getElementById("mctx-play-word");
+  const wordPath = text(document, "#mctx-word-audio-path");
+  let hasWordAudio = false;
+  if (wordPath) {
+    wordAudio.src = wordPath;
+    pool.push(wordAudio);
+    hasWordAudio = true;
+    wordButton.hidden = false;
+    bindPlaying(wordAudio, wordButton);
+    wordButton.addEventListener("click", () => {
+      stopAll();
+      void mctxPlayOnce(wordAudio, state.token, state);
+    });
+    wordAudio.addEventListener("error", () => { wordButton.hidden = true; });
+  } else {
+    wordButton.hidden = true;
+  }
+
+  // ---------- 自动播放：单词 → 全部例句依次 ----------
+  const sequence = async () => {
+    stopAll();
+    const token = state.token;
+    if (hasWordAudio) {
+      const played = await mctxPlayOnce(wordAudio, token, state);
+      if (!played || token !== state.token) return;
+      await new Promise((r) => setTimeout(r, 160));
+      if (token !== state.token) return;
+    }
+    for (const audio of sentenceAudios) {
+      const played = await mctxPlayOnce(audio, token, state);
+      if (!played || token !== state.token) return;
+      await new Promise((r) => setTimeout(r, 160));
+    }
+  };
+  void sequence();
+})();
+</script>
