@@ -65,7 +65,7 @@
 
 /* 背面第二个面板（助记）：与例句面板同一块板，只多点呼吸 */
 .mctx-mnemo {
-  margin-top: 14px;
+  margin-top: 12px;
 }
 
 /* 正面是"检索"面，留更多呼吸空间让人盯着句子回忆；
@@ -196,7 +196,7 @@
 
 /* 每行语境：中文翻译（【…】渲染成下划线，悬停显示本句义）与搭配解析 */
 .mctx-gloss-cn {
-  margin: 5px 0 0;
+  margin: 3px 0 0;
   color: var(--mx-ink);
   font-size: 15px;
   font-weight: 560;
@@ -226,7 +226,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .mctx-answer-label {
@@ -310,14 +310,14 @@
   display: grid;
   gap: 0;
   margin: 0;
-  padding: 0 20px 8px;
+  padding: 0 14px 2px;
   list-style: none;
 }
 
 .mctx-other-item {
   display: grid;
-  gap: 7px;
-  padding: 14px 0 16px;
+  gap: 5px;
+  padding: 10px 0 12px;
   color: var(--mx-ink);
   overflow-wrap: anywhere;
 }
@@ -494,7 +494,7 @@
 
 .theme-bauhaus .mctx-stage,
 .theme-bauhaus .mctx-recap {
-  padding: 12px clamp(22px, 3.4vw, 40px) clamp(22px, 3.4vw, 40px);
+  padding: 12px clamp(18px, 2.6vw, 28px) clamp(18px, 2.6vw, 28px);
   border: 2px solid var(--bh-ink);
   border-top: 12px solid var(--bh-blue);
   border-radius: 0;
@@ -512,7 +512,7 @@
 }
 
 .theme-bauhaus.mctx-card--front .mctx-recap-head {
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .theme-bauhaus .mctx-sentence {
@@ -544,8 +544,8 @@
 .theme-bauhaus .mctx-definition {
   display: inline-block;
   min-width: min(100%, 520px);
-  margin-bottom: 26px;
-  padding: 18px 22px;
+  margin-bottom: 18px;
+  padding: 14px 18px;
   border: 2px solid var(--bh-ink);
   border-top: 12px solid var(--bh-red);
   background: var(--bh-paper);
@@ -733,7 +733,7 @@
 
   .mctx-stage,
   .mctx-recap {
-    padding: 12px 16px 18px;
+    padding: 12px 14px 14px;
     border-radius: 12px;
   }
 
@@ -746,8 +746,8 @@
   }
 
   .mctx-other-list {
-    padding-right: 14px;
-    padding-left: 14px;
+    padding-right: 10px;
+    padding-left: 10px;
   }
 
   .mctx-other-item .mctx-sentence {
@@ -775,12 +775,12 @@
 
   .theme-bauhaus .mctx-stage,
   .theme-bauhaus .mctx-recap {
-    padding: 12px 16px 20px;
+    padding: 12px 14px 16px;
     border-top-width: 10px;
   }
 
   .theme-bauhaus .mctx-definition {
-    padding: 14px 16px;
+    padding: 12px 14px;
   }
 
   .theme-bauhaus .mctx-sentence {
