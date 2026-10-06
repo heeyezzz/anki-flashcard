@@ -64,8 +64,20 @@ rewording (颤抖 vs 战栗) more often than real gaps, so the two strings are s
 confirmation instead. See [the note schema](references/note-schema.md).
 
 `Meaning{i}` is the sense *in that sentence*; `ChineseCore` is the whole-word gloss. Do not duplicate one
-into the other. Since the 2026-10-06 template revision `Meaning{i}` is no longer a printed block — it is
-the hover text on the `SentenceCN{i}` underline, so it must stay short enough to read in a tooltip.
+into the other. Since the 2026-10-06 template revision `Meaning{i}` is not a printed block: tapping the
+underlined span in `SentenceCN{i}` reveals it inline (with `title` as the desktop hover bonus). Two rules
+follow from that:
+
+- **Write `Meaning{i}` short** — it appears inside a sentence on a phone screen, so a gloss that reads
+  like a dictionary entry (`（神色上）担忧的`) is fine, a clause is not.
+- **`【…】` and `Meaning{i}` are different things and must not be merged**: the marker holds the words
+  that actually appear in that translation (`付不起`, `抽不出`), while `Meaning{i}` stays in citation
+  form with its usage domain (`付得起（租下那个地方的钱）`, `抽得出（时间）`). When the English is
+  negative, the marker follows the English and the gloss keeps the base form.
+
+The field is still mandatory even though it is hidden by default: it is the only machine-checkable
+witness that the contexts differ (identical `Meaning{i}` values are rejected), and it is the reference
+answer any future auto-grading would need.
 
 What each side renders (as of the current templates): the **front** shows `Word`, `IPA` and **every**
 populated `Sentence{i}` at once, each with the target word highlighted and its own speaker button — no

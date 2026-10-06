@@ -74,9 +74,12 @@ autoplay tag would play the word twice.
   flags legitimate rewording (颤抖 vs 战栗) — so the two strings are shown side by side and you confirm
   them.
 - `Meaning{i}` is the sense of the target word **in that sentence only** — one short Chinese line
-  (`把（经费）划拨给……；分配`). Since the 2026-10-06 template revision it is not printed as its own
-  block: it becomes the hover/long-press text on the `SentenceCN{i}` underline, so keep it short enough
-  to read in a tooltip. Still never restate the whole-word gloss or write a second translation.
+  (`把（经费）划拨给……；分配`). It is not a printed block: tapping the underlined span in
+  `SentenceCN{i}` reveals it inline (AnkiDroid/AnkiMobile never show `title`, so a hover-only design
+  would make it invisible on the device that matters). Keep it short — it appears inside a sentence on
+  a phone. Still never restate the whole-word gloss or write a second translation.
+  It stays mandatory regardless: it is what the duplicate-sense check compares, and the reference answer
+  for any future grading. Citation form, not the sentence's inflected form — `【…】` carries that.
 - `IPA` is rendered on the front right next to the word, so keep the slashed form
   (`/ɪnˈkɜːr/`). A bare or missing pronunciation is visible card content now, not a hidden detail.
   The dry-run also folds KK/DJ apart and warns when the string is far from ECDICT's phonetic; words

@@ -805,3 +805,67 @@
 }
 
 /* 2026-09-20 by Hermes：本次例句面板上留白收紧为 12px */
+
+/* ---------- 2026-10-06 手机端修正（追加在末尾，靠层叠覆盖前面的同权重规则） ---------- */
+
+/* 正面词头不再是带边框的大面板：窄屏首屏不该被一个空框吃掉 */
+.mctx-card--front .mctx-definition,
+.theme-bauhaus .mctx-card--front .mctx-definition {
+  display: block;
+  min-width: 0;
+  margin: 0 0 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.theme-bauhaus.mctx-card--front {
+  padding: 26px 16px 34px;
+}
+
+/* 下划线不许跨行断词（标注都是 2–5 字，nowrap 安全）；可点的暗示 */
+.mctx-gloss {
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 本句义：默认藏，点下划线就地展开（触屏拿不到 title，必须有可见路径） */
+.mctx-gloss-note {
+  display: none;
+  margin-left: 0.4em;
+  color: var(--mx-muted);
+  font-size: 0.84em;
+  font-weight: 700;
+}
+
+.mctx-gloss.is-open + .mctx-gloss-note {
+  display: inline;
+}
+
+.theme-bauhaus .mctx-gloss-note {
+  color: var(--bh-blue);
+}
+
+.mctx-hint {
+  margin-left: 8px;
+  color: var(--mx-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.theme-bauhaus .mctx-hint {
+  color: var(--bh-blue);
+}
+
+.mctx-card.mctx-answered .mctx-hint {
+  display: none;
+}
+
+@media (max-width: 560px) {
+  /* 全局释义是窄屏第一焦点，但 20px 起跳会让长释义断成三行 */
+  .mctx-core-meaning {
+    font-size: clamp(17px, 5.2vw, 21px);
+  }
+}
