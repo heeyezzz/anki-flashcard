@@ -823,20 +823,8 @@
 
 /* ---------- 2026-10-06 手机端修正（追加在末尾，靠层叠覆盖前面的同权重规则） ---------- */
 
-/* 正面词头不再是带边框的大面板：窄屏首屏不该被一个空框吃掉 */
-.mctx-card--front .mctx-definition,
-.theme-bauhaus .mctx-card--front .mctx-definition {
-  display: block;
-  min-width: 0;
-  margin: 0 0 10px;
-  padding: 0;
-  border: 0;
-  background: none;
-}
-
-.theme-bauhaus.mctx-card--front {
-  padding: 26px 16px 34px;
-}
+/* 正面词头与背面共用同一块带边框面板（2026-10-06 撤回上一轮的"瘦身"改动：
+   正反面观感不一致比首屏少一行更难受；那条 padding 也漏了 media query，宽屏同样生效）。 */
 
 /* 下划线不许跨行断词（标注都是 2–5 字，nowrap 安全）；可点的暗示 */
 .mctx-gloss {
