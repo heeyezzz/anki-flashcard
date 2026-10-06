@@ -214,9 +214,10 @@ What it does, and why:
   other word must not spin forever. Success is `job.state` terminal + `job.error` null +
   `loggedIn:true` + `mediaSyncing:false`; a job error or a `required` still `normal_sync` is surfaced
   and Anki stays open. Report the final `required` value.
-- Quit through `osascript -e 'tell application "Anki" to quit'`, then wait for the endpoint to go dark.
-  Anki answers that AppleScript with `-128 用户已取消` **on a quit that worked**, so the message is only
-  echoed as `quitNotice` and the endpoint going dark is the real proof of closure.
+- Quit through `osascript -e 'tell application "Anki" to quit'`, re-sending the event while the endpoint
+  still answers, and treat **the endpoint going dark** as the only proof of closure. Anki routinely
+  replies `-128 用户已取消` to a quit that then succeeds, and has also replied `-128` while staying up
+  and accepted the next attempt — so the message is only echoed as `quitNotice`, never trusted either way.
 - The original AnkiConnect has no sync actions; there `--finish` refuses to close Anki and tells the
   user to press the sync button themselves.
 

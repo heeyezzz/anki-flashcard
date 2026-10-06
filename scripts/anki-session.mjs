@@ -173,19 +173,24 @@ const sync = async () => {
 
 const quitAnki = async () => {
   let notice = "";
-  try {
-    await run("osascript", ["-e", `tell application "${APP_NAME}" to quit`]);
-  } catch (error) {
-    // Anki replies -128 "用户已取消" on its way out, so a failed AppleScript reply proves nothing —
-    // the endpoint going dark below is what decides whether it actually closed.
-    notice = String(error.stderr || error.message).trim().split("\n").pop();
-  }
+  // One quit event is not enough: Anki has answered -128 and stayed up, then accepted the next
+  // attempt seconds later. Re-send while the endpoint still answers, and treat the endpoint going
+  // dark — not the AppleScript reply — as the proof of closure.
   const deadline = Date.now() + 60_000;
-  while (Date.now() < deadline) {
+  for (;;) {
+    try {
+      await run("osascript", ["-e", `tell application "${APP_NAME}" to quit`]);
+    } catch (error) {
+      notice = String(error.stderr || error.message).trim().split("\n").pop();
+    }
+    const untilRetry = Math.min(Date.now() + 12_000, deadline);
+    while (Date.now() < untilRetry) {
+      if (!(await isOnline())) return { closed: true, notice };
+      await sleep(1500);
+    }
     if (!(await isOnline())) return { closed: true, notice };
-    await sleep(1500);
+    if (Date.now() >= deadline) return { closed: false, notice };
   }
-  return { closed: false, notice };
 };
 
 const report = (payload) => console.log(JSON.stringify(payload, null, 2));
