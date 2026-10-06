@@ -134,10 +134,11 @@
   overflow-wrap: anywhere;
 }
 
-/* 第一焦点：全局释义 ChineseCore —— 大字号 + 强调底色 + 左侧色条 */
+/* 第一焦点：全局释义 ChineseCore —— 大字号 + 强调底色 + 左侧色条，一个义项一行 */
 .mctx-core-meaning {
+  position: relative;
   margin: 10px 0 0;
-  padding: 10px 16px;
+  padding: 26px 16px 10px;
   border-left: 4px solid var(--mx-accent);
   border-radius: 0 10px 10px 0;
   background: var(--mx-accent-soft);
@@ -146,6 +147,18 @@
   font-weight: 800;
   line-height: 1.5;
   overflow-wrap: anywhere;
+}
+
+.mctx-core-text {
+  display: block;
+}
+
+.mctx-core-line {
+  display: block;
+}
+
+.mctx-core-line + .mctx-core-line {
+  margin-top: 4px;
 }
 
 /* 每行语境：中文翻译（【…】渲染成下划线，悬停显示本句义）与搭配解析 */
@@ -177,14 +190,16 @@
 }
 
 .mctx-core-label {
-  display: inline-block;
-  margin-right: 0.55em;
-  padding: 1px 8px;
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  padding: 0 6px;
   border: 1px solid currentColor;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  line-height: 1.7;
+  letter-spacing: 0.05em;
 }
 
 /* ---------- 背面 2：本次例句 ---------- */
@@ -541,7 +556,7 @@
 
 .theme-bauhaus .mctx-core-meaning {
   margin-top: 14px;
-  padding: 10px 16px;
+  padding: 28px 16px 10px;
   border: 2px solid var(--bh-ink);
   border-left: 10px solid var(--bh-red);
   border-radius: 0;
@@ -567,7 +582,9 @@
 }
 
 .theme-bauhaus .mctx-core-label {
-  padding: 1px 7px;
+  top: 7px;
+  left: 12px;
+  padding: 0 6px;
   border: 2px solid var(--bh-ink);
   border-radius: 0;
   background: var(--bh-yellow);
@@ -867,8 +884,9 @@
 }
 
 @media (max-width: 560px) {
-  /* 全局释义是窄屏第一焦点，但 20px 起跳会让长释义断成三行 */
+  /* 窄屏一个义项一行，行本身不会太长，字号可以比原来收一点 */
   .mctx-core-meaning {
+    padding-top: 24px;
     font-size: clamp(17px, 5.2vw, 21px);
   }
 }

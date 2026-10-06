@@ -1,7 +1,7 @@
 <!--
   微语境闪卡 · 背面
   结构：
-    1) 词头（Word + 音标 + 发音）+ **全局释义 ChineseCore（第一焦点，大字）**
+    1) 词头（Word + 音标 + 发音）+ **全局释义 ChineseCore（第一焦点，大字，一个义项一行）**
     2) 全部例句与翻译：每行 = 英文原句（目标词高亮）+ 中文翻译（目标词对应的译词加下划线）
        + 搭配解析。下划线鼠标悬停/长按显示该句的语境义 Meaning。
     3) 其他义项（折叠）
@@ -26,7 +26,7 @@
     </div>
     <p class="mctx-core-meaning" id="mctx-core-meaning">
       <span class="mctx-core-label">全局释义</span>
-      <span id="mctx-core-text">{{ChineseCore}}</span>
+      <span class="mctx-core-text" id="mctx-core-text">{{ChineseCore}}</span>
     </p>
   </section>
 
@@ -262,6 +262,38 @@
   // 已经拿到元素本身时用这个：text() 需要 (root, selector) 两个参数。
   const own = (el) => (el ? el.textContent.trim() : "");
 
+  // 词典串 → 义项数组。分隔符是「；」和词性组之间的「 / 」；括号内的标点不算分隔符。
+  // 词性只写在组的第一项，这里把它带到后续行上，避免「时间表」看起来像换了词性。
+  const POS_HEAD = /^((?:n|v|vt|vi|adj|adv|prep|conj|pron|num|art|int|aux|abbr|excl)\.\s*)/i;
+  const splitSenses = (raw) => {
+    const out = [];
+    let buf = "";
+    let depth = 0;
+    let pos = "";
+    const flush = () => {
+      const s = buf.replace(/\s+/g, " ").trim();
+      buf = "";
+      if (!s) return;
+      const head = s.match(POS_HEAD);
+      if (head) pos = head[1];
+      out.push(head ? s : pos + s);
+    };
+    for (let i = 0; i < raw.length; i += 1) {
+      const ch = raw[i];
+      if (ch === "（" || ch === "(") depth += 1;
+      else if (ch === "）" || ch === ")") depth = Math.max(0, depth - 1);
+      if (!depth && (ch === "；" || ch === ";")) { flush(); continue; }
+      if (!depth && ch === "/" && (/\s/.test(raw[i - 1] || "") || /\s/.test(raw[i + 1] || ""))) {
+        buf = buf.trimEnd();
+        flush();
+        continue;
+      }
+      buf += ch;
+    }
+    flush();
+    return out;
+  };
+
   const card = document.querySelector(".mctx-card");
   if (!card) return;
   if (String(card.dataset.theme || "").trim().toLowerCase() === "bauhaus") {
@@ -276,7 +308,20 @@
 
   // 全局释义是第一焦点：没有它就整块藏掉那一行，不留空标签。
   const coreBox = document.getElementById("mctx-core-meaning");
-  if (!text(document, "#mctx-core-text")) coreBox.hidden = true;
+  const coreHost = document.getElementById("mctx-core-text");
+  const coreRaw = own(coreHost);
+  if (!coreRaw) {
+    coreBox.hidden = true;
+  } else {
+    // 一个义项一行，多义项不再挤成一段
+    coreHost.textContent = "";
+    for (const sense of splitSenses(coreRaw)) {
+      const line = document.createElement("span");
+      line.className = "mctx-core-line";
+      line.textContent = sense;
+      coreHost.appendChild(line);
+    }
+  }
 
   const filled = slots.filter((s) => text(s, ".mctx-sentence"));
   slots.forEach((slot) => { slot.hidden = !text(slot, ".mctx-sentence"); });
