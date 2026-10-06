@@ -250,9 +250,19 @@
     if (p && typeof p.catch === "function") p.catch(() => finish(false));
   });
 
+  // 同一时刻只允许一个声音：sounding 是"现在该出声的那个"，其余一律停掉。
+  let sounding = null;
+
   const bindPlaying = (audio, button) => {
     if (!audio || !button) return;
-    const on = () => button.classList.add("is-playing");
+    const on = () => {
+      // Android WebView 上 pause() 可能赶在 play() 的承诺落地之前，这里补一刀
+      if (sounding !== audio) {
+        audio.pause();
+        return;
+      }
+      button.classList.add("is-playing");
+    };
     const off = () => button.classList.remove("is-playing");
     audio.addEventListener("play", on);
     audio.addEventListener("playing", on);
@@ -368,9 +378,14 @@
   const pattern = mctxPattern(word);
   const state = { token: 0 };
   const pool = [];
-  const stopAll = () => {
+  const stopAll = (keep) => {
     state.token += 1;
-    pool.forEach((audio) => { if (audio) { audio.pause(); audio.currentTime = 0; } });
+    sounding = keep || null;
+    pool.forEach((audio) => {
+      if (!audio || audio === sounding) return;
+      audio.pause();
+      audio.currentTime = 0;
+    });
   };
 
   // ---------- 每一行：高亮目标词、渲染译文下划线、接上该行发音 ----------
@@ -399,7 +414,7 @@
     button.hidden = false;
     bindPlaying(audio, button);
     button.addEventListener("click", () => {
-      stopAll();
+      stopAll(audio);
       void mctxPlayOnce(audio, state.token, state);
     });
     audio.addEventListener("error", () => { button.hidden = true; });
@@ -444,7 +459,7 @@
     wordButton.hidden = false;
     bindPlaying(wordAudio, wordButton);
     wordButton.addEventListener("click", () => {
-      stopAll();
+      stopAll(wordAudio);
       void mctxPlayOnce(wordAudio, state.token, state);
     });
     wordAudio.addEventListener("error", () => { wordButton.hidden = true; });
@@ -455,6 +470,7 @@
   // ---------- 自动播放：只播单词；例句一律手动点喇叭 ----------
   const sequence = async () => {
     if (!hasWordAudio) return;
+    sounding = wordAudio;
     await mctxPlayOnce(wordAudio, state.token, state);
   };
   void sequence();

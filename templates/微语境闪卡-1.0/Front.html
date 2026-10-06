@@ -163,9 +163,28 @@
 
   /* #region audio */
   // 正面一律不自动出声：每条例句一个按钮，手动播放，播放中按钮转红。
+  // 同一时刻只允许一个声音：按下任何一个之前，先把已经挂载的其余音频全部停下。
+  const players = [];
+  let sounding = null;
+  const stopAll = (keep) => {
+    sounding = keep || null;
+    players.forEach((a) => {
+      if (!a || a === sounding) return;
+      a.pause();
+      a.currentTime = 0;
+    });
+  };
+
   const bindPlaying = (audio, button) => {
     if (!audio || !button) return;
-    const on = () => button.classList.add("is-playing");
+    const on = () => {
+      // Android WebView 上 pause() 可能赶在 play() 的承诺落地之前，这里补一刀
+      if (sounding !== audio) {
+        audio.pause();
+        return;
+      }
+      button.classList.add("is-playing");
+    };
     const off = () => button.classList.remove("is-playing");
     audio.addEventListener("play", on);
     audio.addEventListener("playing", on);
@@ -183,8 +202,10 @@
     audio.preload = "none";
     audio.src = src;
     button.closest(".mctx-definition, .mctx-slot, .mctx-card").append(audio);
+    players.push(audio);
     button.hidden = false;
     button.addEventListener("click", () => {
+      stopAll(audio);
       audio.currentTime = 0;
       audio.play().catch(() => {});
     });
