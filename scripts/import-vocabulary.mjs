@@ -18,6 +18,7 @@ import { readFile } from "node:fs/promises";
 import { cleanSpeechText, createMediaFilename, MINIMAX_TTS_ENDPOINT, synthesizeMiniMax } from "./minimax-tts.mjs";
 import { getMiniMaxApiKey } from "./minimax-credentials.mjs";
 import { loadCefrList } from "./level-check.mjs";
+import { loadLexicon, senseHint } from "./lexicon.mjs";
 import {
   ALL_NOTE_FIELDS, ALLOWED_THEMES, AUDIO_FIELDS, BASE_REQUIRED_FIELDS, CONTEXT_FIELDS, OPTIONAL_TEXT_FIELDS,
   THEME_FIELD, assert, getContextCount, isFilledString, normalizeTheme, normalizeWord, validateNote
@@ -149,9 +150,10 @@ const warnings = [];
 const levelFailures = [];
 // 例句难度门：除目标词以外必须落在 CEFR A2 以内（见 references/example-design.md）
 const cefr = levelCheck ? await loadCefrList() : { levels: new Map(), allowed: new Set() };
+const lexicon = await loadLexicon();
 const noteWords = new Set();
 const contextCounts = input.notes.map((note, noteIndex) =>
-  validateNote(note, noteIndex, { warnings, levelFailures, levelCheck, strictLevel, cefr, seenWords: noteWords })
+  validateNote(note, noteIndex, { warnings, levelFailures, levelCheck, strictLevel, cefr, seenWords: noteWords, lexicon })
 );
 
 const [models, decks] = await Promise.all([invoke("modelNames"), invoke("deckNames")]);
@@ -223,12 +225,15 @@ if (dryRun) {
     modelName,
     deckName: input.deckName,
     tags,
+    lexicon: { present: lexicon.present, entries: lexicon.entries.size },
     preview: input.notes.map((note, index) => ({
       word: note.Word.trim(),
       ipa: note.IPA.trim(),
       chineseCore: note.ChineseCore.trim(),
       otherMeanings: (note.OtherMeanings || "").trim() || null,
       theme: ankiNotes[index].fields.Theme,
+      // ECDICT 的中文释义按常用度排列：写语境时先覆盖排在前面的意思（生僻义只在其余几组里补充）。
+      dictionary: senseHint(lexicon, note),
       contexts: contextCounts[index],
       examples: Array.from({ length: contextCounts[index] }, (_, contextIndex) => {
         const slot = contextIndex + 1;

@@ -55,11 +55,31 @@ autoplay tag would play the word twice.
   Use `n.`, `v.`, `adj.`, `adv.`, `prep.`, `pron.`, `conj.`, `det.`, `aux.`, `phr.`, and ` / `
   between multiple roles. Full English words (`noun`, `verb`, …) are rejected, and the field must
   contain Chinese.
+  The dry-run compares the part of speech you declare with ECDICT's tags for that word
+  (`scripts/lexicon.mjs`) and warns when the word is never labelled with it — a warning, not a veto:
+  ECDICT aggregates several dictionaries.
+
+  **Standing rule — `ChineseCore` is dictionary-first.** The `--dry-run` preview carries
+  `dictionary.core`: the ECDICT gloss string cleaned for card use (domain-tagged chunks like
+  `[计]`/`[经]` dropped, `(xxx 的复数)` meta text dropped, `a.`→`adj.` and `vt/vi`→`v.`
+  canonicalised, same-part-of-speech groups merged, senses kept in dictionary order, which is order
+  by commonness). Treat that string as the **floor**: write the field in your own wording, but every
+  sense in the floor must survive it — you may add senses the card's contexts need (the dictionary is
+  often incomplete: `afford` lists three, the card needs 抽得出时间 and 承担得起后果 too), you may
+  reword, you may not delete. When `dictionary.usable` is false the dictionary cannot carry the field —
+  `dictionary.reason` says why (too few characters, or a phrasal entry with no part of speech such as
+  `comply with` = 照做) — then write it yourself and say so in the confirmation. Never paste the raw
+  dictionary string: it is machine-aggregated and carries wrong-sense noise (`nervousness` includes
+  简练, 刚劲). Nothing checks the floor automatically — an experiment showed any character-overlap test
+  flags legitimate rewording (颤抖 vs 战栗) — so the two strings are shown side by side and you confirm
+  them.
 - `Meaning{i}` is the sense of the target word **in that sentence only** — one short Chinese line
   (`把（经费）划拨给……；分配`). It is the card's first-focus answer, so do not restate the whole-word
   gloss or write a second translation of the sentence.
 - `IPA` is rendered on the front right next to the word, so keep the slashed form
   (`/ɪnˈkɜːr/`). A bare or missing pronunciation is visible card content now, not a hidden detail.
+  The dry-run also folds KK/DJ apart and warns when the string is far from ECDICT's phonetic; words
+  whose phonetic is too short to compare, or missing from the table, are left alone.
 - `SentenceCN{i}` is the Chinese translation of the whole sentence.
 - `Analysis{i}` is the collocation/usage note in Chinese, optionally quoting the English pattern
   (`allocate A to B：把 A 分配给 B`).

@@ -28,6 +28,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { cleanSpeechText, createMediaFilename, MINIMAX_TTS_ENDPOINT, synthesizeMiniMax } from "./minimax-tts.mjs";
 import { getMiniMaxApiKey } from "./minimax-credentials.mjs";
 import { loadCefrList } from "./level-check.mjs";
+import { loadLexicon } from "./lexicon.mjs";
 import {
   AUDIO_FIELDS, BASE_REQUIRED_FIELDS, CONTEXT_FIELDS, OPTIONAL_TEXT_FIELDS, THEME_FIELD,
   assert, isFilledString, normalizeTheme, normalizeWord, validateNote
@@ -117,8 +118,9 @@ const levelFailures = [];
 const noteWords = new Set();
 // 例句难度门：除目标词以外必须落在 CEFR A2 以内（见 references/example-design.md）
 const cefr = levelCheck ? await loadCefrList() : { levels: new Map(), allowed: new Set() };
+const lexicon = await loadLexicon();
 const contextCounts = input.notes.map((note, noteIndex) =>
-  validateNote(note, noteIndex, { warnings, levelFailures, levelCheck, strictLevel, cefr, seenWords: noteWords })
+  validateNote(note, noteIndex, { warnings, levelFailures, levelCheck, strictLevel, cefr, seenWords: noteWords, lexicon })
 );
 assert(!levelFailures.length, `${levelFailures.join("；")}\n例句里除目标词以外的词必须保持在 CEFR A2 以内（确需收录更难的句子时用 --no-level-check 关闭该校验）。`);
 

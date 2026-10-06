@@ -21,6 +21,10 @@ check_absent() { # check_absent <label> <forbidden-substring> <command...>
   else echo "PASS  $label"; pass=$((pass+1)); fi
 }
 
+echo "== 0. session (Anki may have been closed by a previous --finish) =="
+if node "$S/scripts/anki-session.mjs" --start >/dev/null; then echo "PASS  anki-session --start"; pass=$((pass+1));
+else echo "FAIL  anki-session --start（Anki 没能上线或同步失败）"; fail=$((fail+1)); fi
+
 echo "== 1. syntax =="
 for f in "$S"/scripts/*.mjs; do
   if node --check "$f" 2>/dev/null; then echo "PASS  node --check $(basename "$f")"; pass=$((pass+1));
@@ -28,6 +32,7 @@ for f in "$S"/scripts/*.mjs; do
 done
 
 echo "== 2. audio-field audit (read-only) =="
+check "anki-session requires a mode"      "Usage: node anki-session.mjs" node "$S/scripts/anki-session.mjs"
 check "ensure-audio-fields reports the model is complete" "已有全部语音字段" node "$S/scripts/ensure-audio-fields.mjs"
 
 echo "== 3. happy path (--dry-run, no writes, no TTS key needed) =="
@@ -71,6 +76,12 @@ variant("nonconsecutive", nonconsecutive)
 variant("duplicate_word", lambda n: n.update(Word="allocate", Sentence1="Please allocate more budget to training.",
                                             Sentence2="Funds were allocated to the region after the audit.",
                                             Sentence3="We allocate one hour a day to reading."))
+# 检索条件查重：同一个 Meaning 是硬错误；只换主语/宾语的改写句要在 dry-run 里被点名。
+variant("same_meaning", lambda n: n.update(Meaning2="免除（费用）"))
+variant("bad_lexicon", lambda n: n.update(ChineseCore="adj. 免除，放弃", IPA="/əˈbaʊd/"))
+variant("paraphrase", lambda n: n.update(
+    Sentence2="The bank agreed to waive the transfer fee for our account.",
+    Meaning2="免除（我行账户费用）", SentenceCN2="银行同意免掉我们账户的转账费。"))
 
 # A2-clean note: every word except the target is A1/A2, so --strict-level must accept it.
 (T/"ok_a2.json").write_text(json.dumps({
@@ -119,6 +130,7 @@ check "--dry-run prints the content preview"  '"dryRun": true'          node "$S
 check "--dry-run lists planned audio files"   '-waive-word-'          node "$S/scripts/import-vocabulary.mjs" "$T/ok.json" --dry-run
 check "--dry-run names the sentence slots"    '-waive-sentence-1-'    node "$S/scripts/import-vocabulary.mjs" "$T/ok.json" --dry-run
 check "--dry-run reports reused vs new"       '"toGenerate"'            node "$S/scripts/import-vocabulary.mjs" "$T/ok.json" --dry-run
+check "--dry-run flags a paraphrased context" '个实词相同'  node "$S/scripts/import-vocabulary.mjs" "$T/paraphrase.json" --dry-run --without-tts
 
 echo "== 4. rejection rules =="
 check "rejects a sentence without the target word" "must contain \"waive\" or one of its inflections" node "$S/scripts/import-vocabulary.mjs" "$T/no_target_word.json" --dry-run
@@ -128,6 +140,7 @@ check "rejects an unknown Theme"                   "Theme must be one of"       
 check "rejects a full English part of speech"      "not a full English word"        node "$S/scripts/import-vocabulary.mjs" "$T/full_pos_word.json" --dry-run
 check "rejects non-consecutive contexts"           "contexts must be consecutive"   node "$S/scripts/import-vocabulary.mjs" "$T/nonconsecutive.json" --dry-run
 check "rejects a word already in the model"        "Words already exist in"         node "$S/scripts/import-vocabulary.mjs" "$T/duplicate_word.json" --dry-run
+check "rejects two contexts sharing one Meaning"   "的 Meaning 完全相同"     node "$S/scripts/import-vocabulary.mjs" "$T/same_meaning.json" --dry-run
 
 echo "== 5. confirmation gate (no writes allowed to happen) =="
 check "refuses to import without --confirmed" "Refusing unconfirmed import" node "$S/scripts/import-vocabulary.mjs" "$T/ok.json" --without-tts
@@ -232,6 +245,7 @@ check "rewrite writes, regenerates audio, self-verifies" '"failed": 0' node "$S/
 echo "== 7. independent verification (read-only) =="
 check "verify-import: fixture card passes"    '"failed": 0'            node "$S/scripts/verify-import.mjs" --deck "$FIXTURE_DECK"
 check "verify-import: single-word mode"       '"word": "incur"'         node "$S/scripts/verify-import.mjs" --deck "$FIXTURE_DECK" --word "incur"
+check "verify-import: a missing word reads as an answer, not a crash" "没有 Word 含" node "$S/scripts/verify-import.mjs" --deck "$FIXTURE_DECK" --word "nosuchword"
 
 echo "== 8. A2 sentence-difficulty gate =="
 check "A2 list loads"                          'allowedForms'           node -e "import('$S/scripts/level-check.mjs').then(async m => { const c = await m.loadCefrList(); console.log('allowedForms', c.allowed.size); })"
@@ -239,6 +253,20 @@ check "dry-run flags words above A2"           '超出 A2 的词'            nod
 check "--strict-level blocks those sentences"  '必须保持在 CEFR A2 以内'  node "$S/scripts/import-vocabulary.mjs" "$T/ok.json" --dry-run --without-tts --strict-level
 check_absent "--no-level-check silences the rule" '超出 A2 的词'         node "$S/scripts/import-vocabulary.mjs" "$T/ok.json" --dry-run --without-tts --no-level-check
 check "strict mode accepts an A2-clean note"   '"dryRun": true'          node "$S/scripts/import-vocabulary.mjs" "$T/ok_a2.json" --dry-run --without-tts --strict-level
+
+echo "== 9. 词典对账（ECDICT 精简表）=="
+check "wrong part of speech is flagged"      "与 ECDICT 对该词的标注不符" node "$S/scripts/import-vocabulary.mjs" "$T/bad_lexicon.json" --dry-run --without-tts
+check "a mismatched IPA is flagged"          "与 ECDICT 音标"             node "$S/scripts/import-vocabulary.mjs" "$T/bad_lexicon.json" --dry-run --without-tts
+check "dry-run carries the sense list"       '"dictionary"'               node "$S/scripts/import-vocabulary.mjs" "$T/ok.json" --dry-run --without-tts
+check_absent "a correct card stays quiet"    'ECDICT'                     node "$S/scripts/import-vocabulary.mjs" "$T/ok.json" --dry-run --without-tts
+check "irregular table covers ECDICT forms"  'went,brought,children'      node -e "import('$S/scripts/level-check.mjs').then(async m => { const c = await m.loadCefrList(); console.log(['went','brought','children'].filter((w) => c.allowed.has(w)).join(',')); })"
+
+echo "== 9b. ChineseCore 词典底串（dictionary-first）=="
+FLOOR="import('$S/scripts/lexicon.mjs').then(async m => { console.log(m.dictionaryCore({ raw: 'n. 特许, 让步；[经] 核准, 许可, 特殊(权)' }).core); })"
+check "the floor keeps the general gloss"        'n. 特许，让步'   node -e "$FLOOR"
+check_absent "the floor drops domain-tagged gloss" '核准'          node -e "$FLOOR"
+check "a pos-less gloss falls back with a reason" '无词性'         node -e "import('$S/scripts/lexicon.mjs').then(async m => { console.log(m.dictionaryCore({ raw: '照做' }).reason); })"
+check "dry-run carries the dictionary floor"     '"core"'         node "$S/scripts/import-vocabulary.mjs" "$T/ok.json" --dry-run --without-tts
 
 echo
 echo "PASS=$pass FAIL=$fail"

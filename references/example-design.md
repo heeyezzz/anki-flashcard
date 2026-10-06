@@ -34,13 +34,23 @@ deck: the learner must be able to read the whole sentence without meeting a seco
 5. **Each `Meaning{i}` is the sense in that sentence.** `allocate` may be 划拨（经费） in one sentence,
    留出（时间） in another, 分派（职责） in a third. If two contexts would print the same `Meaning`,
    they are probably the same retrieval condition — merge or replace one.
+   This one is now machine-checked: two identical `Meaning{i}` values are rejected before anything is
+   written, and a pair of sentences whose content-word skeletons overlap by ≥3 words at ≥75% comes
+   back as a `--dry-run` warning. Treat that warning like an A2 flag — rewrite one of the two, do not
+   import past it.
 6. **Fast to review.** Prefer one natural sentence of roughly 8–15 English words, at most ~160
    characters; the importer warns past that. Keep the target form inside the sentence — the template
    finds it with `mctxPattern()` and renders nothing highlighted if it cannot.
 
 ## Selection order
 
-Cover the high-frequency, natural usage first, then breadth. For polysemous words take the central
+Cover the high-frequency, natural usage first, then breadth. The `--dry-run` preview carries
+`dictionary.senses` — ECDICT's Chinese glosses for the word, which its sources already order by
+commonness. Use that as the starting point: the first context should sit on a gloss near the front of
+that list, and a sense that appears late (or only under a `[计]` / `[法]` / `[经]` domain tag) has to
+earn its place against the interference it adds. It is a cross-check, not a ranking of the card's own
+wording, and it never replaces the A2 sentence rule.
+For polysemous words take the central
 sense, then add another sense only if it is common enough to repay the extra interference. Vary one
 meaningful dimension per context — situation, collocation, sense, grammatical form, or sentence
 function — not surface wording.

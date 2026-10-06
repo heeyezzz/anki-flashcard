@@ -64,7 +64,14 @@ if (!models.includes(MODEL_NAME)) throw new Error(`Missing Anki model: ${MODEL_N
 const query = `deck:"${escapeQuery(config.deckName)}" note:"${MODEL_NAME}"`
   + (config.word ? ` "${escapeQuery(config.word)}"` : "");
 const noteIds = await invoke("findNotes", { query });
-if (!noteIds.length) throw new Error(`No ${MODEL_NAME} notes found for: ${query}`);
+if (!noteIds.length) {
+  // Nothing found is a normal outcome (not imported yet, wrong deck, wrong spelling) — it should read
+  // like an answer, not a crash.
+  console.log(config.word
+    ? `牌组「${config.deckName}」里没有 Word 含 "${config.word}" 的 ${MODEL_NAME} 笔记。请确认牌组名和拼写，或确认导入是否真的成功。`
+    : `牌组「${config.deckName}」里没有 ${MODEL_NAME} 笔记。请确认 --deck 是不是写错了，或该牌组是否用了别的笔记类型。`);
+  process.exit(1);
+}
 const notes = await invoke("notesInfo", { notes: noteIds });
 const cefr = await loadCefrList();
 

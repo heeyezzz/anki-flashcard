@@ -99,6 +99,7 @@ tests/acceptance.sh           验收套件（37 项）
 
 - **代码**：MIT（见 [LICENSE](LICENSE)）。
 - **`assets/cefr-j-words.tsv`**：数据来自 [Maximax67/Words-CEFR-Dataset](https://github.com/Maximax67/Words-CEFR-Dataset)（整合 CEFR-J Wordlist 与 Octanove Vocabulary Profile，后者以 **CC-BY-SA 4.0** 发布）。该数据文件按 **CC-BY-SA 4.0** 使用，仅用于例句难度校验；如需商用或再分发，请自行核对上游许可或替换为你自己的词表（`scripts/level-check.mjs` 只要求同格式的 `<词形>\t<等级>` TSV）。
+- **`assets/ecdict-mini.tsv` / `assets/irregular-forms.txt`**：由 `scripts/build-lexicon-assets.mjs` 从 [skywind3000/ECDICT](https://github.com/skywind3000/ECDICT) 的 `ecdict.csv` 裁剪生成（本仓库只带 1.3 MB 精简表，不带原始 63 MB 词库）。ECDICT 以 **MIT** 发布，但该许可覆盖的是这份**汇编**，其内容聚合自多部词典，公开再分发词库前请自行核对上游授权。用途限定为：释义词性/音标对账、`ChineseCore` 的词典底串、不规则变化表——聚合数据含错并噪声，卡面释义始终由 AI 定稿并经用户确认。
 
 ## 发布更新（维护本仓库）
 

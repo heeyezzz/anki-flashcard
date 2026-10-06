@@ -7,6 +7,7 @@
  * every other word inside CEFR A2.
  */
 import { findAboveLevel, targetFormsOf } from "./level-check.mjs";
+import { checkNote } from "./lexicon.mjs";
 
 export const THEME_FIELD = "Theme";
 export const ALLOWED_THEMES = new Set(["minimal", "bauhaus"]);
@@ -79,6 +80,30 @@ export const sentenceCarriesTarget = (sentence, word) => {
   return pattern ? pattern.test(sentence) : false;
 };
 
+// Closed-class words carry no retrieval cue, so a sentence's "skeleton" is what is left after the
+// target form and these are dropped. Two contexts sharing most of a skeleton are one condition
+// paraphrased, which is the failure mode the 微语境 design cannot recover from at review time.
+export const STOPWORDS = new Set(`a an the this that these those and or but if of in on at to for from
+with about as by than then so not no is are was were be been being do does did have has had will would
+can could may might must should you your yours i me my mine we our ours they their theirs it its he she
+him her hers them there here every each some any both more most other such please next before after
+when while what which who whom whose how why where`
+  .split(/\s+/));
+
+// Jaccard dilutes when one sentence carries an extra detail word, and containment fires on a single
+// shared noun — so a paraphrase needs to overlap most of the thinner skeleton *and* carry substance.
+export const SKELETON_SIMILAR_WARN = 0.75;
+export const MIN_SHARED_CONTENT_WORDS = 3;
+
+export const skeletonWords = (sentence, word) => {
+  const pattern = contextWordPattern(word);
+  const stripped = pattern ? String(sentence).replace(pattern, " ") : String(sentence);
+  return new Set(stripped.toLowerCase().replace(/[^a-z0-9\s'-]/g, " ").split(/[\s'-]+/)
+    .filter((token) => token.length > 1 && !/^\d+$/.test(token) && !STOPWORDS.has(token)));
+};
+
+const plainSentence = (sentence) => sentence.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+
 export const getContextCount = (note, noteIndex) => {
   let count = 0;
   let foundGap = false;
@@ -106,7 +131,7 @@ export const getContextCount = (note, noteIndex) => {
  *   levelFailures (which the caller turns into a hard error) instead of warnings.
  */
 export const validateNote = (note, noteIndex, ctx) => {
-  const { warnings, levelFailures, levelCheck, strictLevel, cefr, seenWords } = ctx;
+  const { warnings, levelFailures, levelCheck, strictLevel, cefr, seenWords, lexicon } = ctx;
   assert(note && typeof note === "object" && !Array.isArray(note), `notes[${noteIndex}] must be an object.`);
   for (const field of BASE_REQUIRED_FIELDS) {
     assert(isFilledString(note[field]), `notes[${noteIndex}].${field} must be a non-empty string.`);
@@ -125,8 +150,11 @@ export const validateNote = (note, noteIndex, ctx) => {
   assert(!FULL_POS_WORD.test(note.ChineseCore.trim()), `notes[${noteIndex}].ChineseCore must open with an abbreviation such as n. / v. / adj., not a full English word.`);
   assert(CJK.test(note.ChineseCore), `notes[${noteIndex}].ChineseCore must contain Chinese.`);
   if (!/^\//.test(note.IPA.trim())) warnings.push(`notes[${noteIndex}].IPA does not start with "/": ${note.IPA.trim()}`);
+  // ECDICT 对账（词性 / 音标）只出警告：聚合词典不是权威，但它能抓住"释义词性写错""音标抄错"。
+  if (lexicon?.present) warnings.push(...checkNote(lexicon, { ...note, Word: word }));
 
   const contextCount = getContextCount(note, noteIndex);
+  const contexts = [];
   for (let index = 1; index <= contextCount; index += 1) {
     const sentence = note[`Sentence${index}`].trim();
     assert(!MARKUP.test(sentence), `notes[${noteIndex}].Sentence${index} must be plain text: no cloze markup, HTML, or sound tags.`);
@@ -145,6 +173,27 @@ export const validateNote = (note, noteIndex, ctx) => {
     assert(CJK.test(note[`Meaning${index}`]), `notes[${noteIndex}].Meaning${index} must contain Chinese (本句语境义).`);
     assert(CJK.test(note[`SentenceCN${index}`]), `notes[${noteIndex}].SentenceCN${index} must contain Chinese (整句中文翻译).`);
     if (!CJK.test(note[`Analysis${index}`])) warnings.push(`notes[${noteIndex}].Analysis${index} has no Chinese; 搭配解析 is normally written in Chinese.`);
+    contexts.push({
+      index,
+      sentence: plainSentence(sentence),
+      meaning: note[`Meaning${index}`].trim().replace(/\s+/g, ""),
+      skeleton: skeletonWords(sentence, word)
+    });
+  }
+  for (let a = 0; a < contexts.length; a += 1) {
+    for (let b = a + 1; b < contexts.length; b += 1) {
+      const first = contexts[a];
+      const second = contexts[b];
+      const pair = `notes[${noteIndex}] 语境 ${first.index} 与 ${second.index}`;
+      assert(first.meaning !== second.meaning, `${pair} 的 Meaning 完全相同：两张卡面答案一样就是同一个检索条件，请合并或换掉一个（见 references/example-design.md 第 5 条）。`);
+      assert(first.sentence !== second.sentence, `${pair} 的 Sentence 完全相同。`);
+      const shared = [...first.skeleton].filter((token) => second.skeleton.has(token));
+      const thinner = Math.min(first.skeleton.size, second.skeleton.size);
+      const containment = thinner ? shared.length / thinner : 0;
+      if (shared.length >= MIN_SHARED_CONTENT_WORDS && containment >= SKELETON_SIMILAR_WARN) {
+        warnings.push(`${pair} 的句子骨架 ${shared.length}/${thinner} 个实词相同（${shared.join(" ")}）：更像同一情境的改写而不是新的检索条件，建议换领域、换搭配或换句法功能。`);
+      }
+    }
   }
   return contextCount;
 };

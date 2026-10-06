@@ -1,6 +1,6 @@
 ---
 name: anki-flashcard
-description: "Use when importing 微语境闪卡 notes into Anki via AnkiConnect."
+description: "Use when importing 微语境闪卡 notes into Anki via AnkiConnect. Brings Anki online and syncs it before writing, and syncs and closes Anki after a verified import."
 version: 1.0.0
 platforms: [macos, linux]
 metadata:
@@ -17,7 +17,9 @@ collection available on AnkiConnect — without changing templates, styling, sch
 notes. It is the sibling of the `AI多场景完型` importer (`anki-multiscene-importer`): same guards, same
 MiniMax audio pipeline, different field contract. It covers two operations: **importing new words**
 (`scripts/import-vocabulary.mjs`) and **rewriting cards that already exist** — content and audio, in
-place, keeping the learner's scheduling (`scripts/rewrite-existing.mjs`).
+place, keeping the learner's scheduling (`scripts/rewrite-existing.mjs`). Anki itself is handled by
+`scripts/anki-session.mjs`: `--start` brings it online (launching it if closed) and syncs before
+anything is written, `--finish` syncs and quits it after a verified run.
 
 `$SKILL_DIR` below means the directory containing this `SKILL.md`.
 
@@ -45,6 +47,17 @@ Three things this note type expects that the sibling importer does not:
    word **twice**. `AudioSentence1..5` keep the sibling model's names; the word file goes to
    `WordAudio`, not `AudioWord`.
 
+**`ChineseCore` is dictionary-first (standing rule).** `--dry-run` returns `dictionary.core` — the
+ECDICT gloss cleaned for card use (domain tags, `(… 的复数)` meta text and truncated fragments dropped,
+`a.`→`adj.`, `vt/vi`→`v.`, same-pos groups merged, senses kept in commonness order). Write the field in
+your own wording but treat that string as the **floor**: add senses freely, reword freely, never drop a
+sense the floor lists. When `dictionary.usable` is false (`dictionary.reason` explains: too few
+characters, or a phrasal entry like `comply with` = 照做), the AI writes it and says so. Never paste the
+raw dictionary string — it is machine-aggregated and carries wrong-sense noise. There is deliberately no
+automated coverage check: on the learner's own cards a character-overlap test flagged legitimate
+rewording (颤抖 vs 战栗) more often than real gaps, so the two strings are shown side by side at
+confirmation instead. See [the note schema](references/note-schema.md).
+
 `Meaning{i}` is the sense *in that sentence* (the card's first-focus answer); `ChineseCore` is the
 whole-word gloss. Do not duplicate one into the other.
 
@@ -56,19 +69,33 @@ visible card content, not just fields behind the answer.
 
 ## Before writing
 
-1. Read [the note schema](references/note-schema.md), then [the context-design guide](references/example-design.md).
-2. Confirm the user has authorized adding these notes. A request to draft, review, or validate
+1. **Session check (mandatory, first thing):** `node "$SKILL_DIR/scripts/anki-session.mjs" --start`. It
+   probes the endpoint: online → syncs AnkiWeb before anything is written; offline → launches Anki
+   (`open -a Anki`, override the app name with `ANKI_APP`), waits up to `--timeout` seconds for the
+   endpoint to answer, then syncs. Non-zero exit means the sync did not land — surface it instead of
+   importing on top of a collection you have not seen. It is macOS-only; elsewhere open Anki by hand.
+2. Read [the note schema](references/note-schema.md), then [the context-design guide](references/example-design.md).
+3. Confirm the user has authorized adding these notes. A request to draft, review, or validate
    vocabulary is not authorization to write to Anki.
-3. Run `node "$SKILL_DIR/scripts/ensure-audio-fields.mjs"`. It is read-only. If it reports missing
+4. Run `node "$SKILL_DIR/scripts/ensure-audio-fields.mjs"`. It is read-only. If it reports missing
    fields, stop and obtain authorization before running the printed `--apply` repair command.
-4. **Mandatory content confirmation:** run the importer with `--dry-run`, then present the user with
+5. **Mandatory content confirmation:** run the importer with `--dry-run`, then present the user with
    the word, IPA, Chinese gloss, and every sentence with its context meaning, translation, and
-   analysis — in the user's own language. The dry-run also lists every token that sits above CEFR A2
+   analysis — in the user's own language. Show `ChineseCore` **next to** `dictionary.core` so the
+   dictionary floor and your wording can be compared line by line, and say plainly when
+   `dictionary.usable` is false and you wrote the gloss yourself. The dry-run also lists every token that sits above CEFR A2
    in a sentence: rewrite those sentences first (`references/example-design.md`), or exempt words the
-   learner already knows in `assets/allow-extra.txt`. Do not generate TTS, write notes, or pass
+   learner already knows in `assets/allow-extra.txt`. It also flags two contexts whose sentences are
+   lightly edited copies of one another (`个实词相同`) — those are one retrieval condition, rewrite one
+   of them the same way. And it cross-checks the card against ECDICT (`scripts/lexicon.mjs`): a
+   `ChineseCore` part of speech the dictionary never assigns that word, or an `IPA` far from its
+   phonetic, comes back as a warning — ECDICT aggregates several dictionaries, so a mismatch means
+   "look again", not "the dictionary wins". The `dictionary` field in the dry-run preview carries
+   ECDICT's Chinese glosses **in order of commonness**, which is where context design should start.
+   Do not generate TTS, write notes, or pass
    `--confirmed` until the user explicitly approves that content. Approving "add this word" or "use
    TTS" is not content approval.
-5. Run the real import with `--confirmed` only after that approval. The script refuses unconfirmed
+6. Run the real import with `--confirmed` only after that approval. The script refuses unconfirmed
    imports before any paid TTS request or note write.
 
 ## Import
@@ -120,8 +147,8 @@ It fills the audio fields of notes whose audio is empty, verifies afterwards tha
 filename really exists in the media collection, and leaves notes that already have audio alone —
 `--refresh` is required to replace audio whose filename no longer matches the current sentence text.
 
-If the endpoint is unavailable, stop and ask the user to open Anki with Agent Connect (or AnkiConnect)
-enabled. Never add
+`scripts/anki-session.mjs --start` already opens Anki when the endpoint is dead. If it still does not
+come up, stop and ask the user to enable Agent Connect (or AnkiConnect) in Anki. Never add
 a fallback that writes collection files directly, and never expose an AnkiConnect endpoint publicly to
 make a remote agent work.
 
@@ -164,18 +191,28 @@ quotes the collocation that is already visible in the sentence. Also note the fr
 every `Sentence{i}` slot and reveals one with JS, so "which sentence is showing" can only be checked
 visually, never by counting strings in the HTML.
 
-### Auto-sync after import (standing instruction)
+### Auto-sync, then close Anki (standing instruction)
 
-Once the import succeeds and `verify-import.mjs` passes, sync to AnkiWeb **without asking again** — the
-user authorized this on 2026-09-21. Call Agent Connect's `syncNow` (it answers
-`{started:true, mediaSync:true}` once the job is accepted), then poll `syncStatus` until the job
-reaches its terminal state and report the final `required` value. **Agent Connect's terminal
-`job.state` is `done`, not `idle`** — the observed sequence is `syncing` → `media_syncing` → `done`,
-with `required` going `null` → `no_changes`. Break the poll on `done` *or* `idle` so the loop also
-works against builds that use the other word; polling only for `idle` never terminates. Success is
-`job.state` terminal + `job.error` null + `loggedIn:true` + `mediaSyncing:false`. A job error or a
-`required` that is still `normal_sync` must be surfaced, not reported as synced. The original
-AnkiConnect has no sync actions; there, ask the user to press the sync button instead.
+Once the write succeeds and `verify-import.mjs` passes, run
+`node "$SKILL_DIR/scripts/anki-session.mjs" --finish` **without asking again**: it syncs to AnkiWeb
+(authorized 2026-09-21) and then quits Anki (authorized 2026-10-02). It is the last command of a run —
+nothing can reach AnkiConnect after it, so finish all verification first. On a failed, refused, or
+aborted run do **not** call it: leave Anki open so the learner can see what happened.
+
+What it does, and why:
+
+- `syncNow` (answers `{started:true}` once the job is accepted), then poll `syncStatus` until the job
+  is terminal. **Agent Connect's terminal `job.state` is `done`, not `idle`** — the observed sequence
+  is `syncing` → `media_syncing` → `done`, with `required` going `null` → `no_changes`. `idle` counts
+  as terminal too, because Anki's sync-on-open may already have finished the job and builds using the
+  other word must not spin forever. Success is `job.state` terminal + `job.error` null +
+  `loggedIn:true` + `mediaSyncing:false`; a job error or a `required` still `normal_sync` is surfaced
+  and Anki stays open. Report the final `required` value.
+- Quit through `osascript -e 'tell application "Anki" to quit'`, then wait for the endpoint to go dark.
+  Anki answers that AppleScript with `-128 用户已取消` **on a quit that worked**, so the message is only
+  echoed as `quitNotice` and the endpoint going dark is the real proof of closure.
+- The original AnkiConnect has no sync actions; there `--finish` refuses to close Anki and tells the
+  user to press the sync button themselves.
 
 ## Rewriting cards that already exist
 
@@ -202,16 +239,22 @@ node "$SKILL_DIR/scripts/rewrite-existing.mjs" /absolute/path/rewrite.json --dec
   single mismatch fails the run. Then verify independently with `verify-import.mjs`.
 - `--without-tts` cannot be combined with `--confirmed`: changed content with stale audio would leave
   the card playing speech that no longer matches its sentences.
+- A run that verifies clean ends the same way as an import: `anki-session.mjs --start` opened it, so
+  `anki-session.mjs --finish` syncs and closes Anki afterwards.
 
 ## Tests
 
-`tests/acceptance.sh` is the acceptance suite (33 checks). It is read-only against the user's decks:
+`tests/acceptance.sh` is the acceptance suite (it prints its own `PASS=n FAIL=n` tally). It is read-only against the user's decks:
 the happy path runs `--dry-run`, the confirmation-gate test runs `--without-tts` without `--confirmed`,
-and the audio/rewrite planning tests use `--dry-run`. It covers syntax, the audio-field audit, the
-dry-run payload, every rejection rule (no target word, cloze markup, incomplete or non-consecutive
-groups, unknown `Theme`, full-English part of speech, duplicate word), the refusal to import without
-`--confirmed`, the A2 gate (`--strict-level`, `--no-level-check`, an A2-clean note), and the rewrite
-planner (no-change plan, audio reuse, unknown word refused).
+and the audio/rewrite planning tests use `--dry-run`. The suite opens Anki itself with
+`anki-session.mjs --start` when the endpoint is dark, and leaves it running when it finishes — close it
+with `--finish` once you are done with it. It covers syntax, the audio-field audit, the
+session-mode guard, the dry-run payload, every rejection rule (no target word, cloze markup, incomplete or non-consecutive
+groups, unknown `Theme`, full-English part of speech, duplicate word, two contexts printing the same
+`Meaning`), the dry-run warning for paraphrased sentences, the refusal to import without
+`--confirmed`, the A2 gate (`--strict-level`, `--no-level-check`, an A2-clean note), the ECDICT
+cross-checks (wrong part of speech, wrong IPA, a clean card staying quiet, the regenerated irregular
+table), and the rewrite planner (no-change plan, audio reuse, unknown word refused).
 
 Its Anki-touching checks provision their own fixture note in `测试::anki-flashcard验收` (imported with
 real MiniMax audio on the first run) and drive everything through that card, so the suite keeps
@@ -228,18 +271,22 @@ SKILL.md
 references/note-schema.md      字段契约（必填/可选/音频字段、内容约定）
 references/example-design.md   3–5 个微语境的设计标准、A2 难度规则与自查清单
 references/minimax-tts.md      语音配置、命名/复用规则、确认门
+scripts/anki-session.mjs             跑前的上线检查 + 拉起 Anki + 同步；验收后同步并退出 Anki（--start / --finish）
 scripts/import-vocabulary.mjs        新建卡片（--dry-run / --confirmed）
 scripts/rewrite-existing.mjs         改写已有卡片：内容+语音，保留排程（--deck / --dry-run / --confirmed）
 scripts/add-audio-to-existing.mjs    给已有卡片补语音（--deck / --word / --refresh / --dry-run）
 scripts/ensure-audio-fields.mjs      语音字段只读体检（--apply 修复）
 scripts/verify-import.mjs            独立验收：字段/媒体/单卡/正面无答案泄漏（--deck / --word）
-scripts/note-rules.mjs               内容规则单一来源（导入与改写共用同一套校验）
+scripts/note-rules.mjs               内容规则单一来源（导入与改写共用同一套校验，含检索条件查重）
 scripts/level-check.mjs              A2 难度校验：CEFR 词表 + 屈折展开 + 自备白名单
+scripts/lexicon.mjs                  ECDICT 对账：ChineseCore 词性、IPA、义项顺序（只出警告）+ 词典底串 dictionary.core
+scripts/build-lexicon-assets.mjs     从 ECDICT 重建 assets/ecdict-mini.tsv 与不规则变化表（会并入 Anki 现有牌词，覆盖短语卡）
 assets/cefr-j-words.tsv               CEFR-J/Octanove 词表（7035 词条，含等级）
+assets/ecdict-mini.tsv                ECDICT 精简表：音标 + 中文释义（按常用度排）+ 词形变化
 assets/allow-extra.txt                自备白名单：你已掌握的专业词，不触发 A2 警告
-assets/irregular-forms.txt            不规则变化（made/found/meant…）不算超纲
+assets/irregular-forms.txt            不规则变化（made/found/meant…）不算超纲；现由构建脚本生成
 scripts/minimax-tts.mjs              TTS 调用与确定性文件名
 scripts/minimax-credentials.mjs      key：env → Keychain → .env
-tests/acceptance.sh                  验收套件（33 项；只写 测试::anki-flashcard验收 夹具牌组）
+tests/acceptance.sh                  验收套件（自带 PASS/FAIL 计数；只写 测试::anki-flashcard验收 夹具牌组）
 agents/openai.yaml, .env.example, .gitignore
 ```
