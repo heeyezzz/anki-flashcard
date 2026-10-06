@@ -75,7 +75,7 @@
 .mctx-sentence {
   margin: 0;
   color: var(--mx-ink);
-  font-size: clamp(19px, 2.7vw, 25px);
+  font-size: clamp(17px, 2.2vw, 20px);
   font-weight: 600;
   line-height: 1.62;
   overflow-wrap: anywhere;
@@ -150,9 +150,9 @@
 
 /* 每行语境：中文翻译（【…】渲染成下划线，悬停显示本句义）与搭配解析 */
 .mctx-gloss-cn {
-  margin: 6px 0 0;
+  margin: 5px 0 0;
   color: var(--mx-ink);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 560;
   line-height: 1.75;
   overflow-wrap: anywhere;
@@ -487,17 +487,17 @@
 }
 
 .theme-bauhaus .mctx-sentence {
-  max-width: 30ch;
+  max-width: 34ch;
   color: var(--bh-ink);
-  font-size: clamp(21px, 3vw, 33px);
+  font-size: clamp(18px, 2.3vw, 22px);
   font-weight: 700;
   line-height: 1.25;
   letter-spacing: -0.015em;
 }
 
 .theme-bauhaus.mctx-card--back .mctx-sentence {
-  max-width: 44ch;
-  font-size: clamp(19px, 2.4vw, 26px);
+  max-width: 46ch;
+  font-size: clamp(17px, 2vw, 19px);
   font-weight: 650;
   line-height: 1.35;
 }
@@ -626,9 +626,9 @@
 }
 
 .theme-bauhaus .mctx-other-item .mctx-sentence {
-  max-width: 44ch;
+  max-width: 46ch;
   color: var(--bh-ink);
-  font-size: clamp(18px, 2.05vw, 23px);
+  font-size: clamp(17px, 2vw, 19px);
   font-weight: 650;
   line-height: 1.35;
 }
@@ -769,11 +769,11 @@
   }
 
   .theme-bauhaus .mctx-sentence {
-    font-size: 22px;
+    font-size: 18px;
   }
 
   .theme-bauhaus.mctx-card--back .mctx-sentence {
-    font-size: 19px;
+    font-size: 17px;
   }
 
   .theme-bauhaus .mctx-word {
@@ -781,7 +781,7 @@
   }
 
   .theme-bauhaus .mctx-other-item .mctx-sentence {
-    font-size: 18px;
+    font-size: 17px;
   }
 
   /* 窄屏正面：面板必然满宽，没有侧向留白放角饰，
@@ -814,7 +814,7 @@
   }
 
   .theme-bauhaus.mctx-card--front .mctx-sentence {
-    font-size: 21px;
+    font-size: 17px;
     line-height: 1.32;
   }
 }

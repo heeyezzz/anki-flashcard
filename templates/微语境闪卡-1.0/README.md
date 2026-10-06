@@ -2,6 +2,11 @@
 
 这三份文件是 `微语境闪卡 1.0` 笔记类型在 Anki 集合中的**当前** Front / Back / CSS 副本。
 2026-10-06 起改为：正面一次显示全部例句（不再轮换、无 shuffle bag、无 localStorage 状态），
+2026-10-06 第五轮：例句字号整体下调，并把正背面统一。手机（≤560px）正面原来 21px、背面 18px，
+现在都是 17px；桌面从 clamp(21,3vw,33)/clamp(19,2.4vw,26) 收到 19px 上限；中文译文 16→15px，解析保持 13px。
+注意有一条同权重、排在最后的 `.theme-bauhaus.mctx-card--front .mctx-sentence` 专门管正面窄屏字号，
+只改 `.theme-bauhaus .mctx-sentence` 是改不动正面的。
+
 2026-10-06 第四轮：撤回上一轮对正面词头面板的"瘦身"——正反面观感不一致比首屏少一行更难受，
 现在正面与背面共用同一块带红顶条的边框面板（词 + 喇叭一行、IPA 一行），背面只是在同一块里多一行「全局释义」。
 同时删掉了那条漏写 media query 的 `.theme-bauhaus.mctx-card--front { padding }`（它在宽屏也生效，
