@@ -1,0 +1,235 @@
+<!--
+  微语境闪卡 · 正面
+  设计约束：只渲染「单词 + 音标 + 单词音频路径 + 全部例句 + 各句音频路径 + 目标词高亮」。
+  严禁在此渲染 Meaning / SentenceCN / Analysis / ChineseCore / OtherMeanings —— 否则答案会进入正面 DOM。
+
+  版式：全部例句一次列出（不再轮换）。选句洗牌袋已移除：正面与背面都不再需要「本次那一句」，
+  因此两侧不存在需要保持一致的随机状态。
+  每个发音按钮都只手动播放：正面是检索面，不自动出声。
+-->
+<main class="mctx-card mctx-card--front" data-theme="{{text:Theme}}">
+  <span id="mctx-word-key" hidden>{{text:Word}}</span>
+  <span id="mctx-word-audio-path" hidden>{{WordAudio}}</span>
+
+  <section class="mctx-definition" id="mctx-definition" aria-label="核心单词信息">
+    <div class="mctx-wordline">
+      <span class="mctx-word" id="mctx-word">{{Word}}</span>
+      <button class="mctx-audio-btn mctx-audio-btn--word" id="mctx-play-word" type="button" hidden
+              aria-label="播放单词发音" title="播放单词发音">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4Z"></path><path d="M16 9.5a4 4 0 0 1 0 5"></path><path d="M18.8 6.8a8 8 0 0 1 0 10.4"></path></svg>
+      </button>
+      {{#IPA}}<span class="mctx-ipa">{{IPA}}</span>{{/IPA}}
+    </div>
+  </section>
+
+  <section class="mctx-stage" id="mctx-stage" aria-label="例句" style="padding-top:12px">
+    <div class="mctx-recap-head">
+      <div class="mctx-answer-label">例句</div>
+    </div>
+
+    <ol class="mctx-other-list mctx-slot-list">
+      <li class="mctx-other-item mctx-slot" data-i="1">
+        <div class="mctx-other-heading">
+          <span class="mctx-other-index">01</span>
+          <button class="mctx-audio-btn" type="button" hidden aria-label="播放本句发音" title="播放本句发音">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4Z"></path><path d="M16 9.5a4 4 0 0 1 0 5"></path><path d="M18.8 6.8a8 8 0 0 1 0 10.4"></path></svg>
+          </button>
+        </div>
+        <p class="mctx-sentence">{{Sentence1}}</p>
+        <span class="mctx-path" hidden>{{AudioSentence1}}</span>
+      </li>
+      <li class="mctx-other-item mctx-slot" data-i="2">
+        <div class="mctx-other-heading">
+          <span class="mctx-other-index">02</span>
+          <button class="mctx-audio-btn" type="button" hidden aria-label="播放本句发音" title="播放本句发音">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4Z"></path><path d="M16 9.5a4 4 0 0 1 0 5"></path><path d="M18.8 6.8a8 8 0 0 1 0 10.4"></path></svg>
+          </button>
+        </div>
+        <p class="mctx-sentence">{{Sentence2}}</p>
+        <span class="mctx-path" hidden>{{AudioSentence2}}</span>
+      </li>
+      <li class="mctx-other-item mctx-slot" data-i="3">
+        <div class="mctx-other-heading">
+          <span class="mctx-other-index">03</span>
+          <button class="mctx-audio-btn" type="button" hidden aria-label="播放本句发音" title="播放本句发音">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4Z"></path><path d="M16 9.5a4 4 0 0 1 0 5"></path><path d="M18.8 6.8a8 8 0 0 1 0 10.4"></path></svg>
+          </button>
+        </div>
+        <p class="mctx-sentence">{{Sentence3}}</p>
+        <span class="mctx-path" hidden>{{AudioSentence3}}</span>
+      </li>
+      <li class="mctx-other-item mctx-slot" data-i="4">
+        <div class="mctx-other-heading">
+          <span class="mctx-other-index">04</span>
+          <button class="mctx-audio-btn" type="button" hidden aria-label="播放本句发音" title="播放本句发音">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4Z"></path><path d="M16 9.5a4 4 0 0 1 0 5"></path><path d="M18.8 6.8a8 8 0 0 1 0 10.4"></path></svg>
+          </button>
+        </div>
+        <p class="mctx-sentence">{{Sentence4}}</p>
+        <span class="mctx-path" hidden>{{AudioSentence4}}</span>
+      </li>
+      <li class="mctx-other-item mctx-slot" data-i="5">
+        <div class="mctx-other-heading">
+          <span class="mctx-other-index">05</span>
+          <button class="mctx-audio-btn" type="button" hidden aria-label="播放本句发音" title="播放本句发音">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4Z"></path><path d="M16 9.5a4 4 0 0 1 0 5"></path><path d="M18.8 6.8a8 8 0 0 1 0 10.4"></path></svg>
+          </button>
+        </div>
+        <p class="mctx-sentence">{{Sentence5}}</p>
+        <span class="mctx-path" hidden>{{AudioSentence5}}</span>
+      </li>
+    </ol>
+  </section>
+
+  <p class="mctx-empty" id="mctx-empty" hidden>这张笔记还没有填写任何例句，请补全 Sentence1~5 字段。</p>
+
+  <audio class="mctx-audio" id="mctx-word-audio" preload="none"></audio>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  /* #region pattern */
+  // 由目标词推导高亮正则：覆盖常见屈折变形，避免后端在句子里写任何标记。
+  // 与 back.html 完全一致，改一处要同步两处。
+  const mctxPattern = (word) => {
+    const w = String(word == null ? "" : word).trim();
+    if (!w) return null;
+    const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (/\s/.test(w)) {
+      return new RegExp("\\b" + w.split(/\s+/).map(esc).join("[\\s\\-]+") + "\\b", "gi");
+    }
+    const low = w.toLowerCase();
+    const forms = new Set([w]);
+    if (/y$/.test(low)) {
+      const stem = w.slice(0, -1);
+      forms.add(stem + "ies");
+      forms.add(stem + "ied");
+      forms.add(stem + "ying");
+    }
+    if (/e$/.test(low)) {
+      forms.add(w + "d");
+      forms.add(w.slice(0, -1) + "ing");
+    }
+    if (/[^aeiouy]$/i.test(low)) {
+      forms.add(w + w.slice(-1) + "ed");
+      forms.add(w + w.slice(-1) + "ing");
+    }
+    forms.add(w + "s");
+    forms.add(w + "es");
+    forms.add(w + "ed");
+    forms.add(w + "ing");
+    const alts = [...forms].sort((a, b) => b.length - a.length).map(esc);
+    return new RegExp("\\b(?:" + alts.join("|") + ")\\b", "gi");
+  };
+  /* #endregion pattern */
+
+  /* #region highlight */
+  // 走 TreeWalker + <mark>，不做任何 innerHTML 拼接（杜绝注入，也保留原有 DOM 结构）。
+  const mctxHighlight = (root, pattern) => {
+    if (!root || !pattern) return 0;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    const nodes = [];
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (node.nodeValue && node.parentNode && node.parentNode.nodeName !== "MARK") nodes.push(node);
+    }
+    let hits = 0;
+    nodes.forEach((node) => {
+      const text = node.nodeValue;
+      pattern.lastIndex = 0;
+      if (!pattern.test(text)) return;
+      pattern.lastIndex = 0;
+      const frag = document.createDocumentFragment();
+      let last = 0;
+      let m;
+      while ((m = pattern.exec(text)) !== null) {
+        if (!m[0].length) { pattern.lastIndex += 1; continue; }
+        if (m.index > last) frag.append(text.slice(last, m.index));
+        const mark = document.createElement("mark");
+        mark.className = "target-word";
+        mark.textContent = m[0];
+        frag.append(mark);
+        last = m.index + m[0].length;
+        hits += 1;
+      }
+      if (last < text.length) frag.append(text.slice(last));
+      node.parentNode.replaceChild(frag, node);
+    });
+    return hits;
+  };
+  /* #endregion highlight */
+
+  /* #region audio */
+  // 正面一律不自动出声：每条例句一个按钮，手动播放，播放中按钮转红。
+  const bindPlaying = (audio, button) => {
+    if (!audio || !button) return;
+    const on = () => button.classList.add("is-playing");
+    const off = () => button.classList.remove("is-playing");
+    audio.addEventListener("play", on);
+    audio.addEventListener("playing", on);
+    audio.addEventListener("pause", off);
+    audio.addEventListener("ended", off);
+    audio.addEventListener("error", off);
+  };
+
+  const mountAudio = (button, src) => {
+    if (!button) return false;
+    if (!src) { button.hidden = true; return false; }
+    // 同背面：游离 Audio 在 Android WebView 上 ended 不保证触发
+    const audio = document.createElement("audio");
+    audio.className = "mctx-audio";
+    audio.preload = "none";
+    audio.src = src;
+    button.closest(".mctx-definition, .mctx-slot, .mctx-card").append(audio);
+    button.hidden = false;
+    button.addEventListener("click", () => {
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    });
+    audio.addEventListener("error", () => { button.hidden = true; });
+    bindPlaying(audio, button);
+    return true;
+  };
+  /* #endregion audio */
+
+  const text = (root, sel) => {
+    const el = root.querySelector(sel);
+    return el ? el.textContent.trim() : "";
+  };
+
+  const card = document.querySelector(".mctx-card");
+  if (!card) return;
+  if (String(card.dataset.theme || "").trim().toLowerCase() === "bauhaus") {
+    card.classList.add("theme-bauhaus");
+  }
+
+  const word = text(document, "#mctx-word-key");
+  const stage = document.getElementById("mctx-stage");
+  const definition = document.getElementById("mctx-definition");
+  const slots = [...document.querySelectorAll(".mctx-slot")];
+  const empty = document.getElementById("mctx-empty");
+
+  // 单词发音与例句无关，先接上：例句缺失时词头仍能发音。
+  mountAudio(document.getElementById("mctx-play-word"), text(document, "#mctx-word-audio-path"));
+
+  const filled = slots.filter((s) => text(s, ".mctx-sentence"));
+  slots.forEach((slot) => { slot.hidden = !text(slot, ".mctx-sentence"); });
+
+  if (!filled.length) {
+    // 没有例句时整块收起：否则留下空框（背面同样是整块隐藏）
+    if (stage) stage.hidden = true;
+    if (definition) definition.hidden = true;
+    empty.hidden = false;
+    return;
+  }
+  empty.hidden = true;
+
+  const pattern = mctxPattern(word);
+  filled.forEach((slot) => {
+    mctxHighlight(slot.querySelector(".mctx-sentence"), pattern);
+    mountAudio(slot.querySelector(".mctx-audio-btn"), text(slot, ".mctx-path"));
+  });
+})();
+</script>

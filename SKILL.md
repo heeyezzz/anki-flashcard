@@ -82,10 +82,12 @@ answer any future auto-grading would need.
 What each side renders (as of the current templates): the **front** shows `Word`, `IPA` and **every**
 populated `Sentence{i}` at once, each with the target word highlighted and its own speaker button — no
 sentence selection, no shuffle bag, and no Chinese anywhere on that side. The **back** puts
-`ChineseCore` in the large first-focus block — **one sense per line**: the back script splits the
-dictionary string on `；` and on the ` / ` between part-of-speech groups (never inside `（…）`), and
-carries the part of speech down onto the lines that lost it, so `n. 日程，安排表；时间表 / v. 安排，预定`
-becomes three rows each starting with its own `n.`/`v.`. The `全局释义` badge is a small label absolutely
+`ChineseCore` in the large first-focus block as a **dictionary-style two-column layout**: the back
+script (`splitGroups`) splits the dictionary string on `；` and on the ` / ` between part-of-speech
+groups (never inside `（…）`) and starts a new group whenever the part of speech changes, so
+`n. 日程，安排表；时间表 / v. 安排，预定` renders a boxed `n` badge beside senses ① and ② and a boxed
+`v` badge beside ③ — the part of speech appears once per group and is never repeated per line, and the
+circled numbers run continuously across groups. The `全局释义` badge is a small label absolutely
 positioned in the block's top-left corner, not inline text. This is render-side only — the field keeps
 its single-line dictionary string, so no note content changes and no media is re-paid. Then one row per
 context: English sentence, Chinese translation with the annotated word underlined (`Meaning{i}` as

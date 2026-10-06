@@ -153,46 +153,12 @@
   display: block;
 }
 
-/* 词典式分栏：词性徽标独占左列，义项在右列逐行编号 */
-.mctx-core-group {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.mctx-core-group + .mctx-core-group {
-  margin-top: 6px;
-}
-
-.mctx-core-pos {
-  flex: 0 0 auto;
-  box-sizing: border-box;
-  min-width: 1.7em;
-  margin-top: 0.3em;
-  padding: 0 0.35em;
-  border: 2px solid currentColor;
-  font-size: 0.52em;
-  font-weight: 800;
-  line-height: 1.7;
-  text-align: center;
-  letter-spacing: 0;
-}
-
-.mctx-core-senses {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
 .mctx-core-line {
   display: block;
 }
 
 .mctx-core-line + .mctx-core-line {
   margin-top: 4px;
-}
-
-.mctx-core-no {
-  margin-right: 0.3em;
 }
 
 /* 每行语境：中文翻译（【…】渲染成下划线，悬停显示本句义）与搭配解析 */
