@@ -43,10 +43,10 @@ Four things this note type expects that the sibling importer does not:
    `Sentence{i}`.
 2. **No separate `PartOfSpeech` field.** Carry the part of speech at the start of `ChineseCore` using
    abbreviations (`v. 修改，修订；更正`). Full English words such as `verb` are rejected.
-3. **No `AudioWordAuto`, no `AudioMediaRefs`, no `[sound:...]` tags.** The back template plays
-   word → every sentence in sequence with its own JS player, so an Anki-native autoplay tag would play
-   the word **twice**. `AudioSentence1..5` keep the sibling model's names; the word file goes to
-   `WordAudio`, not `AudioWord`.
+3. **No `AudioWordAuto`, no `AudioMediaRefs`, no `[sound:...]` tags.** The back template plays the word
+   automatically with its own JS player (sentence audio stays behind the row's button), so an
+   Anki-native autoplay tag would play the word **twice**. `AudioSentence1..5` keep the sibling model's
+   names; the word file goes to `WordAudio`, not `AudioWord`.
 4. **`SentenceCN{i}` carries exactly one `【…】` pair** around the words that translate the target word
    (`她在寒风里【发抖】，把外套紧紧裹上。`). The back renders it as an underline and shows that group's
    `Meaning{i}` on hover/long-press. Missing, doubled, empty or unbalanced markers are a `--dry-run`
@@ -84,7 +84,8 @@ populated `Sentence{i}` at once, each with the target word highlighted and its o
 sentence selection, no shuffle bag, and no Chinese anywhere on that side. The **back** puts
 `ChineseCore` in the large first-focus block, then one row per context: English sentence, Chinese
 translation with the annotated word underlined (`Meaning{i}` as tooltip) and `Analysis{i}` beneath, plus
-`OtherMeanings` in a collapsed block; it plays word → all sentences automatically. So `Word`, `IPA` and
+`OtherMeanings` in a collapsed block; it auto-plays **the word only** — every sentence audio is manual,
+behind that row's speaker button. So `Word`, `IPA` and
 `WordAudio` are now
 visible card content, not just fields behind the answer.
 

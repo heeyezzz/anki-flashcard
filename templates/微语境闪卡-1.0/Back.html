@@ -298,7 +298,6 @@
   };
 
   // ---------- 每一行：高亮目标词、渲染译文下划线、接上该行发音 ----------
-  const sentenceAudios = [];
   filled.forEach((slot) => {
     highlightTarget(slot.querySelector(".mctx-sentence"), pattern);
 
@@ -316,11 +315,14 @@
     const button = slot.querySelector(".mctx-audio-btn");
     const path = text(slot, ".mctx-path");
     if (!path) { button.hidden = true; return; }
-    const audio = new Audio();
+    // 挂进 DOM 而不是游离的 new Audio()：Android WebView 不保证给游离元素派发 ended，
+    // 那样 .is-playing 会一直留在按钮上。
+    const audio = document.createElement("audio");
+    audio.className = "mctx-audio";
     audio.preload = "none";
     audio.src = path;
+    slot.append(audio);
     pool.push(audio);
-    sentenceAudios.push(audio);
     button.hidden = false;
     bindPlaying(audio, button);
     button.addEventListener("click", () => {
@@ -355,21 +357,10 @@
     wordButton.hidden = true;
   }
 
-  // ---------- 自动播放：单词 → 全部例句依次 ----------
+  // ---------- 自动播放：只播单词；例句一律手动点喇叭 ----------
   const sequence = async () => {
-    stopAll();
-    const token = state.token;
-    if (hasWordAudio) {
-      const played = await mctxPlayOnce(wordAudio, token, state);
-      if (!played || token !== state.token) return;
-      await new Promise((r) => setTimeout(r, 160));
-      if (token !== state.token) return;
-    }
-    for (const audio of sentenceAudios) {
-      const played = await mctxPlayOnce(audio, token, state);
-      if (!played || token !== state.token) return;
-      await new Promise((r) => setTimeout(r, 160));
-    }
+    if (!hasWordAudio) return;
+    await mctxPlayOnce(wordAudio, state.token, state);
   };
   void sequence();
 })();

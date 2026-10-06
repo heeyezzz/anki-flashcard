@@ -339,11 +339,20 @@
   stroke-width: 1.9;
 }
 
-.mctx-audio-btn:hover,
 .mctx-audio-btn.is-playing {
   border-color: var(--mx-accent);
   background: var(--mx-accent-soft);
   color: var(--mx-accent);
+}
+
+/* 触屏没有真正的 hover：点一下就会把 :hover 一直留在按钮上，
+   表现为「播放完还是红的，点别处才恢复」。所以 hover 只对能 hover 的设备生效。 */
+@media (hover: hover) {
+  .mctx-audio-btn:hover {
+    border-color: var(--mx-accent);
+    background: var(--mx-accent-soft);
+    color: var(--mx-accent);
+  }
 }
 
 .mctx-audio-btn:focus-visible {
@@ -631,10 +640,16 @@
   color: var(--bh-ink);
 }
 
-.theme-bauhaus .mctx-audio-btn:hover,
 .theme-bauhaus .mctx-audio-btn.is-playing {
   background: var(--bh-red);
   color: var(--bh-paper);
+}
+
+@media (hover: hover) {
+  .theme-bauhaus .mctx-audio-btn:hover {
+    background: var(--bh-red);
+    color: var(--bh-paper);
+  }
 }
 
 .theme-bauhaus .mctx-audio-btn:focus-visible,

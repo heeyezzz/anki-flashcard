@@ -177,9 +177,12 @@
   const mountAudio = (button, src) => {
     if (!button) return false;
     if (!src) { button.hidden = true; return false; }
-    const audio = new Audio();
+    // 同背面：游离 Audio 在 Android WebView 上 ended 不保证触发
+    const audio = document.createElement("audio");
+    audio.className = "mctx-audio";
     audio.preload = "none";
     audio.src = src;
+    button.closest(".mctx-definition, .mctx-slot, .mctx-card").append(audio);
     button.hidden = false;
     button.addEventListener("click", () => {
       audio.currentTime = 0;
