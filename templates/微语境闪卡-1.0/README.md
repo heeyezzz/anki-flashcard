@@ -1,6 +1,13 @@
 # 当前集合里的模板（只作留痕与回滚）
 
 这三份文件是 `微语境闪卡 1.0` 笔记类型在 Anki 集合中的**当前** Front / Back / CSS 副本。
+2026-10-06 第十轮：例句行降噪。目标词从「黄底 + 2px 黑框」改成**只有红色粗体**——注意 `<mark>` 有 UA
+默认黄底，删掉 `background` 声明不够，必须显式 `background: transparent`，否则黄色照样透出来；
+`--mx-mark-bg/ink/line` 三个变量随之删除（两套主题都删）。译文里的标注词从红色粗体 + 2px 红实线改成
+**跟随正文色的 1px 点状下划线**（`.theme-bauhaus .mctx-gloss` 整条删除，颜色靠 inherit）。例句行喇叭
+改用早就存在但没人用的 `.mctx-audio-btn--other`（它本来就带 `justify-self:end`，上一轮我新加的那条
+重复规则删掉了），24px → **20px**、图标 13 → 11px；单词那颗 `.mctx-audio-btn--word` 保持 28px 不动。
+例句字号正反面统一收到 16px（窄屏 6 条 `.mctx-sentence*` 规则全部对齐，桌面 clamp 上限 19 → 18）。
 2026-10-06 第九轮：背面按墨墨背单词拆成**两个面板**。「例句」只剩英文句 + 中文译文；每句的
 `Analysis{i}` 在模板里降级成隐藏源 `.mctx-analysis-src`，由脚本按该句的 `data-i` 归集到第二个
 `.mctx-recap` 面板「助记」（复用 `.mctx-other-item` / `.mctx-other-index` / `.mctx-analysis` 的样式，

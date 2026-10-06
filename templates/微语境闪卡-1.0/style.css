@@ -20,9 +20,6 @@
   --mx-line: #d7e1ec;
   --mx-accent: #1768c5;
   --mx-accent-soft: #e9f2ff;
-  --mx-mark-bg: #fff0b8;
-  --mx-mark-ink: #6b4200;
-  --mx-mark-line: #e0b64a;
 }
 
 .card {
@@ -92,12 +89,10 @@
   font-weight: 560;
 }
 
+/* 目标词：只换色不加底。必须显式清掉 <mark> 的 UA 黄底 */
 .target-word {
-  padding: 0.04em 0.2em;
-  border-bottom: 2px solid var(--mx-mark-line);
-  border-radius: 5px;
-  background: var(--mx-mark-bg);
-  color: var(--mx-mark-ink);
+  background: transparent;
+  color: var(--mx-accent);
   font-weight: 800;
 }
 
@@ -209,13 +204,11 @@
   overflow-wrap: anywhere;
 }
 
+/* 译文的标注：点状下划线、跟随正文色，只是提示"这里可以点"，不抢译文 */
 .mctx-gloss {
-  text-decoration: underline;
-  text-decoration-color: var(--mx-accent);
-  text-decoration-thickness: 2px;
-  text-underline-offset: 4px;
-  color: var(--mx-accent);
-  font-weight: 700;
+  text-decoration: underline dotted;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
   cursor: help;
 }
 
@@ -341,11 +334,6 @@
   min-width: 0;
 }
 
-/* 喇叭贴行的右边缘，不跟着序号挤在左上角（正反面同一套行结构，一起生效） */
-.mctx-other-heading .mctx-audio-btn {
-  justify-self: end;
-}
-
 .mctx-other-index {
   font-variant-numeric: tabular-nums;
 }
@@ -353,7 +341,7 @@
 .mctx-other-item .mctx-sentence {
   display: block;
   max-width: 58ch;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 560;
   line-height: 1.5;
 }
@@ -410,14 +398,14 @@
 }
 
 .mctx-audio-btn--other {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   justify-self: end;
 }
 
 .mctx-audio-btn--other svg {
-  width: 13px;
-  height: 13px;
+  width: 11px;
+  height: 11px;
 }
 
 /* ---------- 暗色模式 ---------- */
@@ -430,9 +418,6 @@
   --mx-line: #3a4c60;
   --mx-accent: #7bbaff;
   --mx-accent-soft: #203f61;
-  --mx-mark-bg: #4a3d12;
-  --mx-mark-ink: #ffe9a3;
-  --mx-mark-line: #8a7326;
 }
 
 .nightMode .mctx-card {
@@ -541,18 +526,13 @@
 
 .theme-bauhaus.mctx-card--back .mctx-sentence {
   max-width: 46ch;
-  font-size: clamp(17px, 2vw, 19px);
+  font-size: clamp(16px, 1.9vw, 18px);
   font-weight: 650;
   line-height: 1.35;
 }
 
 .theme-bauhaus .target-word {
-  padding: 0.02em 0.14em;
-  border: 2px solid var(--bh-ink);
-  border-radius: 0;
-  background: var(--bh-yellow);
-  color: var(--bh-ink);
-  font-weight: 800;
+  color: var(--bh-red);
 }
 
 .theme-bauhaus .mctx-empty {
@@ -597,11 +577,6 @@
 
 .theme-bauhaus .mctx-gloss-cn {
   color: var(--bh-ink);
-}
-
-.theme-bauhaus .mctx-gloss {
-  text-decoration-color: var(--bh-red);
-  color: var(--bh-red);
 }
 
 .theme-bauhaus .mctx-analysis {
@@ -664,7 +639,7 @@
 .theme-bauhaus .mctx-other-item .mctx-sentence {
   max-width: 46ch;
   color: var(--bh-ink);
-  font-size: clamp(17px, 2vw, 19px);
+  font-size: clamp(16px, 1.9vw, 18px);
   font-weight: 650;
   line-height: 1.35;
 }
@@ -719,11 +694,15 @@
 .nightMode .theme-bauhaus .mctx-recap-copy p,
 .nightMode .theme-bauhaus .mctx-extra summary,
 .nightMode .theme-bauhaus .mctx-extra p,
-.nightMode .theme-bauhaus .mctx-other-item,
-.nightMode .theme-bauhaus .target-word {
+.nightMode .theme-bauhaus .mctx-other-item {
   border-color: #f6f0e2;
   background: var(--bh-yellow);
   color: #181818;
+}
+
+/* 暗色下例句整行落在黄色条上，目标词保持包豪斯红即可 */
+.nightMode .theme-bauhaus .target-word {
+  color: var(--bh-red);
 }
 
 .nightMode .theme-bauhaus .mctx-recap-copy,
@@ -759,7 +738,7 @@
   }
 
   .mctx-sentence {
-    font-size: 19px;
+    font-size: 16px;
   }
 
   .mctx-word {
@@ -805,11 +784,11 @@
   }
 
   .theme-bauhaus .mctx-sentence {
-    font-size: 18px;
+    font-size: 16px;
   }
 
   .theme-bauhaus.mctx-card--back .mctx-sentence {
-    font-size: 17px;
+    font-size: 16px;
   }
 
   .theme-bauhaus .mctx-word {
@@ -817,7 +796,7 @@
   }
 
   .theme-bauhaus .mctx-other-item .mctx-sentence {
-    font-size: 17px;
+    font-size: 16px;
   }
 
   /* 窄屏正面：面板必然满宽，没有侧向留白放角饰，
@@ -850,7 +829,7 @@
   }
 
   .theme-bauhaus.mctx-card--front .mctx-sentence {
-    font-size: 17px;
+    font-size: 16px;
     line-height: 1.32;
   }
 }
