@@ -87,8 +87,8 @@ script (`splitGroups`) splits the dictionary string on `；` and on the ` / ` be
 groups (never inside `（…）`) and starts a new group whenever the part of speech changes, so
 `n. 日程，安排表；时间表 / v. 安排，预定` renders a boxed `n` badge beside senses ① and ② and a boxed
 `v` badge beside ③ — the part of speech appears once per group and is never repeated per line, and the
-circled numbers run continuously across groups. The `全局释义` badge is a small label absolutely
-positioned in the block's top-left corner, not inline text. This is render-side only — the field keeps
+circled numbers run continuously across groups. The block carries **no `全局释义` label** (removed
+2026-10-06: the framed panel is the label). This is render-side only — the field keeps
 its single-line dictionary string, so no note content changes and no media is re-paid. Then one row per
 context: English sentence, Chinese translation with the annotated word underlined (`Meaning{i}` as
 tooltip) and `Analysis{i}` beneath, plus `OtherMeanings` in a collapsed block; it auto-plays **the word

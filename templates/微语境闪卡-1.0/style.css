@@ -134,16 +134,15 @@
   overflow-wrap: anywhere;
 }
 
-/* 第一焦点：全局释义 ChineseCore —— 大字号 + 强调底色 + 左侧色条，一个义项一行 */
+/* 第一焦点：ChineseCore 词典式分栏 —— 强调底色 + 左侧色条 */
 .mctx-core-meaning {
-  position: relative;
   margin: 10px 0 0;
-  padding: 26px 16px 10px;
+  padding: 12px 16px;
   border-left: 4px solid var(--mx-accent);
   border-radius: 0 10px 10px 0;
   background: var(--mx-accent-soft);
   color: var(--mx-accent);
-  font-size: clamp(20px, 2.6vw, 26px);
+  font-size: clamp(18px, 2.3vw, 23px);
   font-weight: 800;
   line-height: 1.5;
   overflow-wrap: anywhere;
@@ -221,19 +220,6 @@
   font-size: 14px;
   line-height: 1.7;
   overflow-wrap: anywhere;
-}
-
-.mctx-core-label {
-  position: absolute;
-  top: 6px;
-  left: 8px;
-  padding: 0 6px;
-  border: 1px solid currentColor;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1.7;
-  letter-spacing: 0.05em;
 }
 
 /* ---------- 背面 2：本次例句 ---------- */
@@ -590,13 +576,13 @@
 
 .theme-bauhaus .mctx-core-meaning {
   margin-top: 14px;
-  padding: 28px 16px 10px;
+  padding: 14px 16px;
   border: 2px solid var(--bh-ink);
   border-left: 10px solid var(--bh-red);
   border-radius: 0;
   background: #fff8e9;
   color: var(--bh-ink);
-  font-size: clamp(19px, 2.4vw, 25px);
+  font-size: clamp(17px, 2.1vw, 21px);
   font-weight: 800;
 }
 
@@ -613,16 +599,6 @@
   color: var(--bh-ink);
   font-size: 13px;
   opacity: 0.78;
-}
-
-.theme-bauhaus .mctx-core-label {
-  top: 7px;
-  left: 12px;
-  padding: 0 6px;
-  border: 2px solid var(--bh-ink);
-  border-radius: 0;
-  background: var(--bh-yellow);
-  color: var(--bh-ink);
 }
 
 .theme-bauhaus .mctx-answer-label {
@@ -918,9 +894,9 @@
 }
 
 @media (max-width: 560px) {
-  /* 窄屏一个义项一行，行本身不会太长，字号可以比原来收一点 */
+  /* 窄屏一行一个义项，行本身不会太长，字号可以比原来收一点 */
   .mctx-core-meaning {
-    padding-top: 24px;
-    font-size: clamp(17px, 5.2vw, 21px);
+    padding: 12px 14px;
+    font-size: clamp(15px, 4.4vw, 18px);
   }
 }

@@ -1,7 +1,7 @@
 <!--
   微语境闪卡 · 背面
   结构：
-    1) 词头（Word + 音标 + 发音）+ **全局释义 ChineseCore（第一焦点，大字，词性分组 + 义项编号）**
+    1) 词头（Word + 音标 + 发音）+ **ChineseCore 释义块（第一焦点，词性分组 + 义项编号）**
     2) 全部例句与翻译：每行 = 英文原句（目标词高亮）+ 中文翻译（目标词对应的译词加下划线）
        + 搭配解析。下划线鼠标悬停/长按显示该句的语境义 Meaning。
     3) 其他义项（折叠）
@@ -25,7 +25,6 @@
       {{#IPA}}<span class="mctx-ipa">{{IPA}}</span>{{/IPA}}
     </div>
     <p class="mctx-core-meaning" id="mctx-core-meaning">
-      <span class="mctx-core-label">全局释义</span>
       <span class="mctx-core-text" id="mctx-core-text">{{ChineseCore}}</span>
     </p>
   </section>
@@ -308,7 +307,7 @@
   const definition = document.querySelector(".mctx-definition");
   const recap = document.getElementById("mctx-recap");
 
-  // 全局释义是第一焦点：没有它就整块藏掉那一行，不留空标签。
+  // 释义块是第一焦点：没有 ChineseCore 就整块藏掉，不留空面板。
   const coreBox = document.getElementById("mctx-core-meaning");
   const coreHost = document.getElementById("mctx-core-text");
   const coreRaw = own(coreHost);
