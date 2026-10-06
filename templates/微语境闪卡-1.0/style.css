@@ -198,9 +198,9 @@
 .mctx-gloss-cn {
   margin: 3px 0 0;
   color: var(--mx-ink);
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 560;
-  line-height: 1.75;
+  line-height: 1.6;
   overflow-wrap: anywhere;
 }
 
@@ -213,7 +213,7 @@
 }
 
 .mctx-analysis {
-  margin: 6px 0 0;
+  margin: 0;
   color: var(--mx-muted);
   font-size: 14px;
   line-height: 1.7;
@@ -310,32 +310,21 @@
   display: grid;
   gap: 0;
   margin: 0;
-  padding: 0 14px 2px;
+  padding: 0 12px 0;
   list-style: none;
 }
 
 .mctx-other-item {
+  position: relative;
   display: grid;
-  gap: 5px;
-  padding: 10px 0 12px;
+  gap: 4px;
+  padding: 8px 30px 9px 0;
   color: var(--mx-ink);
   overflow-wrap: anywhere;
 }
 
 .mctx-other-item + .mctx-other-item {
   border-top: 1px solid var(--mx-line);
-}
-
-.mctx-other-heading {
-  display: grid;
-  grid-template-columns: 2.4ch minmax(0, 1fr);
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.mctx-other-index {
-  font-variant-numeric: tabular-nums;
 }
 
 .mctx-other-item .mctx-sentence {
@@ -398,9 +387,11 @@
 }
 
 .mctx-audio-btn--other {
+  position: absolute;
+  top: 8px;
+  right: 0;
   width: 20px;
   height: 20px;
-  justify-self: end;
 }
 
 .mctx-audio-btn--other svg {
@@ -494,7 +485,7 @@
 
 .theme-bauhaus .mctx-stage,
 .theme-bauhaus .mctx-recap {
-  padding: 12px clamp(18px, 2.6vw, 28px) clamp(18px, 2.6vw, 28px);
+  padding: 10px clamp(16px, 2.2vw, 22px) clamp(16px, 2.2vw, 22px);
   border: 2px solid var(--bh-ink);
   border-top: 12px solid var(--bh-blue);
   border-radius: 0;
@@ -544,8 +535,8 @@
 .theme-bauhaus .mctx-definition {
   display: inline-block;
   min-width: min(100%, 520px);
-  margin-bottom: 18px;
-  padding: 14px 18px;
+  margin-bottom: 14px;
+  padding: 12px 16px;
   border: 2px solid var(--bh-ink);
   border-top: 12px solid var(--bh-red);
   background: var(--bh-paper);
@@ -564,8 +555,8 @@
 }
 
 .theme-bauhaus .mctx-core-meaning {
-  margin-top: 14px;
-  padding: 14px 16px;
+  margin-top: 12px;
+  padding: 10px 14px;
   border: 2px solid var(--bh-ink);
   border-left: 10px solid var(--bh-red);
   border-radius: 0;
@@ -627,13 +618,6 @@
 
 .theme-bauhaus .mctx-other-item + .mctx-other-item {
   border-top: 1px solid var(--bh-ink);
-}
-
-.theme-bauhaus .mctx-other-index {
-  color: var(--bh-red);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
 }
 
 .theme-bauhaus .mctx-other-item .mctx-sentence {
@@ -733,7 +717,7 @@
 
   .mctx-stage,
   .mctx-recap {
-    padding: 12px 14px 14px;
+    padding: 10px 12px 12px;
     border-radius: 12px;
   }
 
@@ -775,7 +759,7 @@
 
   .theme-bauhaus .mctx-stage,
   .theme-bauhaus .mctx-recap {
-    padding: 12px 14px 16px;
+    padding: 10px 12px 14px;
     border-top-width: 10px;
   }
 

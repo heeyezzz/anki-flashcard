@@ -1,6 +1,17 @@
 # 当前集合里的模板（只作留痕与回滚）
 
 这三份文件是 `微语境闪卡 1.0` 笔记类型在 Anki 集合中的**当前** Front / Back / CSS 副本。
+2026-10-06 第十三轮：**去掉例句与助记的 01/02 编号，整卡再压一档**。编号和它那层
+`.mctx-other-heading` 一起从两个模板里删了（CSS 的 `.mctx-other-heading` / `.mctx-other-index`
+及包豪斯那条红色序号规则同步删除，`data-i` 已无人读取也删掉）。喇叭因此改成
+**绝对定位在行的右上角**（`.mctx-other-item { position:relative; padding-right:30px }` +
+`.mctx-audio-btn--other { position:absolute; top:8px; right:0 }`），句子让出右侧 30px 给它，
+320px 下验证过不会压字。助记行由脚本只生成一个 `<p class="mctx-analysis">`，不再有序号行。
+译文 15px/1.75 → **13px/1.6**。其余固定值继续收：行 `padding 10/12→8/9、gap 5→4`、词头块
+`margin-bottom 18→14、padding 14/18→12/16`、释义块 `padding 14/16→10/14`、面板
+`clamp(18,2.6vw,28)→clamp(16,2.2vw,22)`、列表 `0 14px 2px→0 12px 0`，窄屏四条同步。
+560px 宽下整卡高度：约 1050（第十轮前）→ 830（第十二轮）→ **约 590px**。
+喇叭的叠音回归测试在结构改动后重跑，两面仍 `EXCLUSIVE ok`。
 2026-10-06 第十二轮：字号收小之后把**固定间距按同比例重新配平**（间隙是写死的 px，不跟字号走）。
 量的结果：行内本来就不松（抬头→例句只有 7px），空的是块与块之间——所以动的是
 词头块 `margin-bottom 26→18 / padding 18px22px→14px18px`、例句面板 `padding clamp(22,3.4vw,40)→
