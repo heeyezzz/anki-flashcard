@@ -79,26 +79,13 @@ The field is still mandatory even though it is hidden by default: it is the only
 witness that the contexts differ (identical `Meaning{i}` values are rejected), and it is the reference
 answer any future auto-grading would need.
 
-What each side renders (as of the current templates): the **front** shows `Word`, `IPA` and **every**
-populated `Sentence{i}` at once, each with the target word highlighted and its own speaker button — no
-sentence selection, no shuffle bag, and no Chinese anywhere on that side. The **back** puts
-`ChineseCore` in the large first-focus block as a **dictionary-style two-column layout**: the back
-script (`splitGroups`) splits the dictionary string on `；` and on the ` / ` between part-of-speech
-groups (never inside `（…）`) and starts a new group whenever the part of speech changes, so
-`n. 日程，安排表；时间表 / v. 安排，预定` renders a boxed `n` badge beside senses ① and ② and a boxed
-`v` badge beside ③ — the part of speech appears once per group and is never repeated per line, and the
-circled numbers run continuously across groups. The block carries **no `全局释义` label** (removed
-2026-10-06: the framed panel is the label). This is render-side only — the field keeps
-its single-line dictionary string, so no note content changes and no media is re-paid. Then two stacked
-panels: **例句** = one row per context with the English sentence (red-highlighted target word) and its
-Chinese translation (the annotated word under a dotted underline, `Meaning{i}` revealed on tap); the
-row's speaker button is absolutely positioned in the row's **top-right corner** and the text reserves a
-30px right gutter for it — rows carry **no 01/02 numbering** (removed 2026-10-06, and with it the
-unused `data-i` attributes). **助记** = the `Analysis{i}` collocation notes gathered in sentence order
-from the hidden `.mctx-analysis-src` spans as plain lines, followed by `OtherMeanings` in a collapsed
-其他义项 block. The 助记 panel hides itself when a note has neither. It auto-plays **the
-word only** — every sentence audio is manual, behind that row's speaker button. So `Word`, `IPA` and
-`WordAudio` are now visible card content, not just fields behind the answer.
+What each side renders is documented in `templates/微语境闪卡-1.0/README.md` (front = the retrieval face
+with every sentence and no Chinese anywhere; back = the `ChineseCore` gloss block grouped by part of
+speech, then the 例句 and 助记 panels). Two of those details are content rules in disguise, so they are
+stated here: `ChineseCore` stays **one flat dictionary string** — the renderer splits it, never write
+line breaks into the field; and `Meaning{i}` is only reachable through the `【…】` span of
+`SentenceCN{i}`, so that marker is what makes the per-sentence gloss visible at all. `Word`, `IPA` and
+`WordAudio` are visible card content, not just fields behind the answer.
 
 ## Before writing
 
@@ -273,6 +260,16 @@ node "$SKILL_DIR/scripts/rewrite-existing.mjs" /absolute/path/rewrite.json --dec
 - A run that verifies clean ends the same way as an import: `anki-session.mjs --start` opened it, so
   `anki-session.mjs --finish` syncs and closes Anki afterwards.
 
+## 改卡面模板（渲染层）
+
+卡面形态与完整命令序列在 `templates/微语境闪卡-1.0/README.md`，顺序是
+`--start` → `template-push.mjs --snapshot` → 编辑 → `render-card.mjs` → `template-invariants.mjs`
+→ `template-push.mjs --push` → `verify-import.mjs` → `--finish`。三条不许越过的线：渲染层改动
+**不得触发笔记重写或重新付费 TTS**；`render-card.mjs` 必须从**集合现拉字段**（旧备份快照缺 `【】`
+标记，会让译文下划线整条静默失去验证——已经为此白验证过一轮）；布局结论最终要在 **AnkiDroid 手机
+截图**上确认，桌面渲染只是代理。`--push` 会先要求集合内容仍等于 git HEAD，防止覆盖别人在 Anki 里
+直接改过的模板。
+
 ## Tests
 
 `tests/acceptance.sh` is the acceptance suite (it prints its own `PASS=n FAIL=n` tally). It is read-only against the user's decks:
@@ -308,6 +305,8 @@ scripts/rewrite-existing.mjs         改写已有卡片：内容+语音，保留
 scripts/add-audio-to-existing.mjs    给已有卡片补语音（--deck / --word / --refresh / --dry-run）
 scripts/ensure-audio-fields.mjs      语音字段只读体检（--apply 修复）
 scripts/verify-import.mjs            独立验收：字段/媒体/单卡/正面无答案泄漏（--deck / --word）
+scripts/render-card.mjs              离线渲染真卡：从集合现拉字段 + mustache 子集 + headless Chrome 截图（窄屏走 iframe）
+scripts/template-push.mjs            模板与 CSS 的快照 / 比对 / 推送（git HEAD 基线守卫 + 逐字节读回）
 scripts/note-rules.mjs               内容规则单一来源（导入与改写共用同一套校验，含检索条件查重）
 scripts/level-check.mjs              A2 难度校验：CEFR 词表 + 屈折展开 + 自备白名单
 scripts/lexicon.mjs                  ECDICT 对账：ChineseCore 词性、IPA、义项顺序（只出警告）+ 词典底串 dictionary.core
@@ -319,6 +318,8 @@ assets/irregular-forms.txt            不规则变化（made/found/meant…）�
 scripts/minimax-tts.mjs              TTS 调用与确定性文件名
 scripts/minimax-credentials.mjs      key：env → Keychain → .env
 tests/acceptance.sh                  验收套件（自带 PASS/FAIL 计数；只写 测试::anki-flashcard验收 夹具牌组）
-templates/微语境闪卡-1.0/             当前 Front/Back/CSS 的留痕副本（含 2026-10-06 改前快照）；脚本不读不写这里
+tests/template-invariants.mjs        模板不变量：正背面共用函数逐字节一致 / 无死 CSS / 同一时刻只有一个声音
+templates/微语境闪卡-1.0/             当前 Front/Back/CSS 副本 + 现在的卡面形态说明；template-push.mjs 以此为准推送
+CHANGELOG.md                          模板/渲染层的轮次史（第 N 轮）；字段与内容规则的变更记在 SKILL.md
 agents/openai.yaml, .env.example, .gitignore
 ```

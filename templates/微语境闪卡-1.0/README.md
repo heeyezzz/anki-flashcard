@@ -1,81 +1,50 @@
-# 当前集合里的模板（只作留痕与回滚）
+# 当前集合里的模板（留痕与回滚）
 
-这三份文件是 `微语境闪卡 1.0` 笔记类型在 Anki 集合中的**当前** Front / Back / CSS 副本。
-2026-10-06 第十三轮：**去掉例句与助记的 01/02 编号，整卡再压一档**。编号和它那层
-`.mctx-other-heading` 一起从两个模板里删了（CSS 的 `.mctx-other-heading` / `.mctx-other-index`
-及包豪斯那条红色序号规则同步删除，`data-i` 已无人读取也删掉）。喇叭因此改成
-**绝对定位在行的右上角**（`.mctx-other-item { position:relative; padding-right:30px }` +
-`.mctx-audio-btn--other { position:absolute; top:8px; right:0 }`），句子让出右侧 30px 给它，
-320px 下验证过不会压字。助记行由脚本只生成一个 `<p class="mctx-analysis">`，不再有序号行。
-译文 15px/1.75 → **13px/1.6**。其余固定值继续收：行 `padding 10/12→8/9、gap 5→4`、词头块
-`margin-bottom 18→14、padding 14/18→12/16`、释义块 `padding 14/16→10/14`、面板
-`clamp(18,2.6vw,28)→clamp(16,2.2vw,22)`、列表 `0 14px 2px→0 12px 0`，窄屏四条同步。
-560px 宽下整卡高度：约 1050（第十轮前）→ 830（第十二轮）→ **约 590px**。
-喇叭的叠音回归测试在结构改动后重跑，两面仍 `EXCLUSIVE ok`。
-2026-10-06 第十二轮：字号收小之后把**固定间距按同比例重新配平**（间隙是写死的 px，不跟字号走）。
-量的结果：行内本来就不松（抬头→例句只有 7px），空的是块与块之间——所以动的是
-词头块 `margin-bottom 26→18 / padding 18px22px→14px18px`、例句面板 `padding clamp(22,3.4vw,40)→
-clamp(18,2.6vw,28)`、列表 `0 20px 8px→0 14px 2px`、每行 `padding 14/16→10/12、gap 7→5`、译文
-`margin-top 5→3`、抬头 `margin-bottom 12→8`（正面 14→10）、助记面板 `14→12`；窄屏那四条同步收。
-单行高度 143.8 → 129.8px，560px 宽下整卡从约 1050px 缩到 830px。用 DOM 探针把每个块的高度
-和间隙画进截图量的，别照着眼睛估。
-2026-10-06 第十一轮（功能修复）：**正面点例句喇叭会叠音**。正面的点击处理只有 `currentTime=0; play()`，
-从来没停过别的音频（背面一直有 `stopAll()`），所以连点两行就是两个声音同时放。现在正面补上和背面
-同款的 `players` + `stopAll(keep)`，单词那颗喇叭也走同一条路（`mountAudio` 统一挂载，天然纳入）。
-两面另加一道兜底：`bindPlaying` 的 `play` 回调里，`sounding !== audio` 就立刻 `pause()`——Android
-WebView 上 `pause()` 可能赶在 `play()` 的承诺落地之前，光靠点击前停一遍不够。背面自动播单词那条
-序列现在也先 `sounding = wordAudio` 再播，否则会被这道兜底当场停掉。
-验证（临时脚本，未入库）：把 `HTMLMediaElement.play/pause` 打桩成"正在响"的集合，按 7 次点击的序列
-断言"任何一次点击之后正在响的元素 ≤ 1"——修复前正面报 OVERLAP x2，修复后两面都过。**兜底那条
-（play 事件里补 pause）离线测不到**，它要真实媒体事件，只能在手机上确认。
-2026-10-06 第十轮：例句行降噪。目标词从「黄底 + 2px 黑框」改成**只有红色粗体**——注意 `<mark>` 有 UA
-默认黄底，删掉 `background` 声明不够，必须显式 `background: transparent`，否则黄色照样透出来；
-`--mx-mark-bg/ink/line` 三个变量随之删除（两套主题都删）。译文里的标注词从红色粗体 + 2px 红实线改成
-**跟随正文色的 1px 点状下划线**（`.theme-bauhaus .mctx-gloss` 整条删除，颜色靠 inherit）。例句行喇叭
-改用早就存在但没人用的 `.mctx-audio-btn--other`（它本来就带 `justify-self:end`，上一轮我新加的那条
-重复规则删掉了），24px → **20px**、图标 13 → 11px；单词那颗 `.mctx-audio-btn--word` 保持 28px 不动。
-例句字号正反面统一收到 16px（窄屏 6 条 `.mctx-sentence*` 规则全部对齐，桌面 clamp 上限 19 → 18）。
-2026-10-06 第九轮：背面按墨墨背单词拆成**两个面板**。「例句」只剩英文句 + 中文译文；每句的
-`Analysis{i}` 在模板里降级成隐藏源 `.mctx-analysis-src`，由脚本按该句的 `data-i` 归集到第二个
-`.mctx-recap` 面板「助记」（复用 `.mctx-other-item` / `.mctx-other-index` / `.mctx-analysis` 的样式，
-所以序号仍是红色的 01/02…、解析仍是那行小字），`其他义项` 折叠块也搬进这一面板；两者都空时整块
-`hidden`。同一轮把行内喇叭移到行的**右边缘**（`.mctx-other-heading .mctx-audio-btn { justify-self:end }`，
-正反面共用行结构所以一起生效），例句面板标题从「例句与翻译」改成「例句」。仍是纯渲染层，字段没动。
-2026-10-06 第八轮：删掉「全局释义」小标签（带边框的面板本身就是标签），块的上内边距从 26/28/24px
-收到 12/14/12px，释义字号 桌面 clamp(19,2.4vw,25)→clamp(17,2.1vw,21)、窄屏 clamp(17,5.2vw,21)→
-clamp(15,4.4vw,18)。**注意**：手机（≤560px）上例句字号是 17px（第五轮定的），所以现在释义 18px 只比
-例句大 1px，第一焦点的层级主要靠词性徽标和编号撑着；嫌平就把窄屏上限调回 19~20px。
-`.mctx-core-label` 的 base 与 `.theme-bauhaus` 两条规则一起删了，`position:relative` 也一并去掉
-（它只为那个绝对定位的小标签存在）。
-2026-10-06 第七轮：**全局释义改成词典式分栏**（对齐默默背单词的释义排版）。背面脚本不再把词性
-复制到每一行，而是按词性**分组**：`splitGroups()` 返回 `{pos, senses[]}`，词性一变即新起一组
-（同一词性被 `；` 重复写出时合并），渲染成「左侧词性方框徽标（只在组首出现、去掉句点）+ 右列
-义项逐行编号 ①②③（跨词性连续）」。布局是 `.mctx-core-group` 的 flex 两列，义项列 `min-width:0`
-所以窄屏换行会挂在自己缩进下。这只是渲染层的事：字段仍然是一整行词典串，笔记内容和音频都不用动。
-改前快照在 `改前-释义排版-20261006/`。
-2026-10-06 起改为：正面一次显示全部例句（不再轮换、无 shuffle bag、无 localStorage 状态），
-2026-10-06 第六轮：**全局释义一个义项一行**。背面脚本把 `ChineseCore` 按「；」和词性组之间的「 / 」拆开
-（括号内的标点不拆），并把只写在组首的词性带到后续行上，所以 `n. 日程，安排表；时间表 / v. 安排，预定`
-显示成三行、每行自带 `n.`/`v.`。「全局释义」徽标从行内改成块内左上角的小标签（`position:absolute` +
-`top:6px/left:8px`，字号 11→10px），块因此多了 26px 上内边距（包豪斯 28px、窄屏 24px）。
-这只是渲染层的事：字段仍然是一整行词典串，笔记内容和音频都不用动。
-2026-10-06 第五轮：例句字号整体下调，并把正背面统一。手机（≤560px）正面原来 21px、背面 18px，
-现在都是 17px；桌面从 clamp(21,3vw,33)/clamp(19,2.4vw,26) 收到 19px 上限；中文译文 16→15px，解析保持 13px。
-注意有一条同权重、排在最后的 `.theme-bauhaus.mctx-card--front .mctx-sentence` 专门管正面窄屏字号，
-只改 `.theme-bauhaus .mctx-sentence` 是改不动正面的。
+这三份文件是 `微语境闪卡 1.0` 笔记类型在 Anki 集合中的**当前** Front / Back / CSS 副本，
+与集合逐字节一致（`scripts/template-push.mjs --check` 可以核对）。
+改动历史在仓库根的 `CHANGELOG.md`，本文件只描述**现在的样子**。
 
-2026-10-06 第四轮：撤回上一轮对正面词头面板的"瘦身"——正反面观感不一致比首屏少一行更难受，
-现在正面与背面共用同一块带红顶条的边框面板（词 + 喇叭一行、IPA 一行），背面只是在同一块里多一行「全局释义」。
-同时删掉了那条漏写 media query 的 `.theme-bauhaus.mctx-card--front { padding }`（它在宽屏也生效，
-把原本只在窄屏让位装饰的 48/54px 覆盖成了 26/34px）。
+## 正面（检索面）
 
-2026-10-06 第三轮：背面自动播放改为**只播单词**（例句一律手动点喇叭）；`:hover` 收进
-`@media (hover: hover)`——触屏上点按会把 `:hover` 一直留在按钮上，就是「播完还红着、点别处才恢复」的真因；
-每行音频元素改为挂进 DOM 的 `<audio>`（游离 `new Audio()` 在 Android WebView 上 `ended` 不保证派发）。
+`Word` + 单词喇叭 + `IPA` 在带红顶条的边框面板里，下面「例句」面板一次显示**全部** `Sentence{i}`：
+目标词由 `mctxPattern()` 在渲染时高亮，每行右上角一颗喇叭。没有中文、没有轮换、没有
+localStorage 状态——任何答案字段都不进正面 DOM（`scripts/verify-import.mjs` 会查渲染后的题面）。
 
-背面以 `ChineseCore` 大字为第一焦点，每行语境给出「英文句 + 中文译文（`【…】` 渲染成下划线，
-悬停显示该组 `Meaning`）+ 搭配解析」，自动播放顺序为 词 → 全部例句。
+## 背面（答案面）
 
-**本 skill 的脚本不写模板**，也不从这里读取。改模板请走 `anki-card-template-design` 的流程：
-快照 → 离线渲染验证 → `updateModelTemplates`（整表回传）+ `updateModelStyling` → 逐字节读回比对。
+1. 与正面同一块词头面板，下面多一行 **`ChineseCore` 释义块**：脚本 `splitGroups()` 把那一整行
+   词典串按「；」和词性组之间的「 / 」**分组**（括号内标点不切），词性一变即新起一组，渲染成
+   左侧方框词性徽标（只在组首出现、去掉句点）+ 右列义项 ①②③（跨词性连续编号）。
+2. **例句面板**：每行英文句（目标词红色粗体，无底色）+ 中文译文（`【…】` 渲染成正文色的
+   1px 点状下划线，点击就地展开该组 `Meaning{i}`），喇叭绝对定位在行的右上角，句子让出右侧 30px。
+   **没有 01/02 编号。**
+3. **助记面板**：各句 `Analysis{i}` 按例句顺序作为纯文本行归集到这里（模板里它们是隐藏源
+   `.mctx-analysis-src`，脚本读出来再填），后面跟 `OtherMeanings` 的「其他义项」折叠块；
+   两者都空时整块 `hidden`。
+4. 自动播放**只有单词**，例句一律手动点。同一时刻只允许一个声音：点击前 `stopAll(keep)` 停其余，
+   `play` 回调里再兜一道（不是 `sounding` 就 `pause`），因为 Android WebView 上 `pause()` 可能抢在
+   `play()` 的承诺落地之前。
+
+## 改模板的流程（脚本已就位，别手搓）
+
+```sh
+node scripts/anki-session.mjs --start                       # Anki 上线并同步
+node scripts/template-push.mjs --snapshot                    # 回滚点落盘
+# 编辑 Front.html / Back.html / style.css
+node scripts/render-card.mjs --word schedule --side both      # 用集合里的真字段离线渲染 + 截图
+node tests/template-invariants.mjs                             # 共用函数一致 / 无死 CSS / 音频独占
+node scripts/template-push.mjs --push                          # 基线守卫 + 整表回传 + 逐字节读回
+node scripts/verify-import.mjs --deck 'all in one::微语境闪卡'
+node scripts/anki-session.mjs --finish                         # 同步并关闭
+```
+
+三条硬约束：
+
+- **渲染层改动不得触发笔记重写或重新付费 TTS**（字段值一个都不动）。
+- `render-card.mjs` 从**集合现拉字段**，不要用旧的 `~/.hermes/cache/.../backups/*.json`——
+  那份快照缺 `【】` 标记，会让译文下划线整条静默失去验证。
+- 真实审阅端是 **AnkiDroid**：没有 `title` 提示、`:hover` 点按后会黏住。布局结论最终要在手机截图上确认。
+
 `SentenceCN{i}` 里的 `【…】` 是这套渲染的契约，由 `scripts/note-rules.mjs` 校验（缺失出警告）。
+正背面共用的函数（`mctxPattern` / `bindPlaying` / `text`）是**复制**而非共享——Anki 模板没有 import
+机制，所以 `tests/template-invariants.mjs` 要求它们逐字节一致，改一处必须同步两处。

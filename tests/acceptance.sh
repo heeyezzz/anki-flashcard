@@ -270,6 +270,9 @@ check_absent "the floor drops domain-tagged gloss" '核准'          node -e "$F
 check "a pos-less gloss falls back with a reason" '无词性'         node -e "import('$S/scripts/lexicon.mjs').then(async m => { console.log(m.dictionaryCore({ raw: '照做' }).reason); })"
 check "dry-run carries the dictionary floor"     '"core"'         node "$S/scripts/import-vocabulary.mjs" "$T/ok.json" --dry-run --without-tts
 
+echo "== 10. 模板不变量（共用函数一致 / 无死 CSS / 音频独占）=="
+check "template invariants all hold" "模板不变量全部通过" node "$S/tests/template-invariants.mjs"
+
 echo
 echo "PASS=$pass FAIL=$fail"
 [ "$fail" -eq 0 ]

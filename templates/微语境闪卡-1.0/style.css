@@ -234,34 +234,7 @@
   font-size: 12px;
   font-weight: 760;
   letter-spacing: 0.08em;
-}
-
-.mctx-slots {
-  min-width: 0;
-}
-
-.mctx-recap-copy {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid var(--mx-line);
-}
-
-.mctx-recap-copy h2 {
-  margin: 0 0 7px;
-  color: var(--mx-ink);
-  font-size: 14px;
-  font-weight: 800;
-}
-
-.mctx-recap-copy p {
-  margin: 0;
-  color: var(--mx-muted);
-  font-size: 15px;
-  line-height: 1.7;
-  overflow-wrap: anywhere;
-}
-
-.mctx-extra {
+}.mctx-extra {
   margin-top: 16px;
   padding-top: 14px;
   border-top: 1px solid var(--mx-line);
@@ -283,24 +256,6 @@
   white-space: pre-line;
   overflow-wrap: anywhere;
 }
-
-/* ---------- 背面 3：本词储备的其他语境 ---------- */
-.mctx-more {
-  margin-top: 20px;
-  border: 1px solid var(--mx-line);
-  border-radius: 13px;
-  background: var(--mx-surface);
-}
-
-.mctx-more summary {
-  padding: 15px 18px;
-  color: var(--mx-accent);
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.mctx-more summary:focus-visible,
 .mctx-extra summary:focus-visible {
   outline: 3px solid rgba(23, 104, 197, 0.22);
   outline-offset: 2px;
@@ -581,38 +536,17 @@
   font-size: 13px;
   letter-spacing: 0.06em;
 }
-
-.theme-bauhaus .mctx-recap-copy,
 .theme-bauhaus .mctx-extra {
   border-top: 2px solid var(--bh-ink);
 }
-
-.theme-bauhaus .mctx-recap-copy h2,
 .theme-bauhaus .mctx-extra summary {
   color: var(--bh-red);
   font-size: 13px;
   letter-spacing: 0.08em;
 }
-
-.theme-bauhaus .mctx-recap-copy p,
 .theme-bauhaus .mctx-extra p {
   color: var(--bh-ink);
-}
-
-.theme-bauhaus .mctx-more {
-  margin-top: 24px;
-  border: 2px solid var(--bh-ink);
-  border-radius: 0;
-  background: var(--bh-paper);
-}
-
-.theme-bauhaus .mctx-more summary {
-  color: var(--bh-ink);
-  font-weight: 800;
-  letter-spacing: 0.02em;
-}
-
-.theme-bauhaus .mctx-other-list {
+}.theme-bauhaus .mctx-other-list {
   border-top: 2px solid var(--bh-ink);
 }
 
@@ -648,7 +582,6 @@
 }
 
 .theme-bauhaus .mctx-audio-btn:focus-visible,
-.theme-bauhaus .mctx-more summary:focus-visible,
 .theme-bauhaus .mctx-extra summary:focus-visible {
   outline: 3px solid var(--bh-blue);
   outline-offset: 3px;
@@ -663,8 +596,7 @@
 
 .nightMode .theme-bauhaus .mctx-stage,
 .nightMode .theme-bauhaus .mctx-recap,
-.nightMode .theme-bauhaus .mctx-definition,
-.nightMode .theme-bauhaus .mctx-more {
+.nightMode .theme-bauhaus .mctx-definition {
   background: #181818;
   border-color: #f6f0e2;
 }
@@ -673,9 +605,6 @@
 .nightMode .theme-bauhaus .mctx-word,
 .nightMode .theme-bauhaus .mctx-ipa,
 .nightMode .theme-bauhaus .mctx-core-meaning,
-.nightMode .theme-bauhaus .mctx-more summary,
-.nightMode .theme-bauhaus .mctx-recap-copy h2,
-.nightMode .theme-bauhaus .mctx-recap-copy p,
 .nightMode .theme-bauhaus .mctx-extra summary,
 .nightMode .theme-bauhaus .mctx-extra p,
 .nightMode .theme-bauhaus .mctx-other-item {
@@ -688,8 +617,6 @@
 .nightMode .theme-bauhaus .target-word {
   color: var(--bh-red);
 }
-
-.nightMode .theme-bauhaus .mctx-recap-copy,
 .nightMode .theme-bauhaus .mctx-extra,
 .nightMode .theme-bauhaus .mctx-other-list,
 .nightMode .theme-bauhaus .mctx-other-item + .mctx-other-item {
