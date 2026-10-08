@@ -29,6 +29,18 @@ export const MARKUP = /\{\{|\}\}|\[sound:|【|】|<\/?[a-z][^>]*>/i;
 // 背面译文下划线靠 SentenceCN 里恰好一处【…】标记（模板把【x】渲染成 <u>x</u>，悬停显示同组 Meaning）。
 export const GLOSS_MARK = /【[^】]*】/g;
 export const CJK = /[\u3400-\u9fff]/;
+/**
+ * ChineseCore 是**词头本身**的整词释义。单个词的词头不许在括号以外塞进英文短语条目——
+ * 短语搭配属于 Meaning{i} / Analysis{i}（渲染在助记面板），写在这里只会变成第三份重复。
+ * 括号内的示例搭配（`adj. 零售的（retail price 零售价）`）是合法用法说明，不算短语条目。
+ */
+export const phraseEntriesIn = (core, word) => {
+  const outsideParens = String(core).replace(/（[^）]*）/g, " ").replace(/\([^)]*\)/g, " ");
+  const runs = outsideParens.match(/[A-Za-z][A-Za-z'’-]*(?:[ \t]+[A-Za-z][A-Za-z'’-]*)+/g) || [];
+  return [...new Set(runs.map((run) => run.trim()))]
+    .filter((run) => normalizeWord(run) !== normalizeWord(word) && !run.includes("."));
+};
+export const isPhrasalHead = (word) => /\s/.test(String(word).trim());
 export const MAX_SENTENCE_CHARS = 160;
 export const MIN_SENTENCE_WORDS = 5;
 
@@ -151,6 +163,11 @@ export const validateNote = (note, noteIndex, ctx) => {
 
   assert(!FULL_POS_WORD.test(note.ChineseCore.trim()), `notes[${noteIndex}].ChineseCore must open with an abbreviation such as n. / v. / adj., not a full English word.`);
   assert(CJK.test(note.ChineseCore), `notes[${noteIndex}].ChineseCore must contain Chinese.`);
+  const strayPhrases = isPhrasalHead(word) ? [] : phraseEntriesIn(note.ChineseCore, word);
+  assert(!strayPhrases.length,
+    `notes[${noteIndex}].ChineseCore 里混进了短语条目「${strayPhrases.join("、")}」：ChineseCore 是词头 "${word}" 的整词释义，短语搭配请写进该组的 Meaning/Analysis（渲染在助记面板）。`);
+  assert(!/\bphr\s*\./.test(note.ChineseCore) || isPhrasalHead(word),
+    `notes[${noteIndex}].ChineseCore 用了 phr.，但词头 "${word}" 是单个词：phr. 只用于词头本身就是短语的卡（如 comply with）。`);
   if (!/^\//.test(note.IPA.trim())) warnings.push(`notes[${noteIndex}].IPA does not start with "/": ${note.IPA.trim()}`);
   // ECDICT 对账（词性 / 音标）只出警告：聚合词典不是权威，但它能抓住"释义词性写错""音标抄错"。
   if (lexicon?.present) warnings.push(...checkNote(lexicon, { ...note, Word: word }));

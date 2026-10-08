@@ -80,6 +80,8 @@ variant("duplicate_word", lambda n: n.update(Word="allocate", Sentence1="Please 
 variant("same_meaning", lambda n: n.update(Meaning2="免除（费用）"))
 variant("no_mark", lambda n: n.update(SentenceCN1="银行同意对小额账户免除转账手续费。"))
 variant("bad_lexicon", lambda n: n.update(ChineseCore="adj. 免除，放弃", IPA="/əˈbaʊd/"))
+# ChineseCore 是整词释义：单词卡不许塞英文短语条目（真卡 spite 曾把 phr. in spite of 写进来）
+variant("phrase_in_gloss", lambda n: n.update(ChineseCore="v. 免除，放弃（费用）；phr. waive the rule 通融一下"))
 variant("paraphrase", lambda n: n.update(
     Sentence2="The bank agreed to waive the transfer fee for our account.",
     Meaning2="免除（我行账户费用）", SentenceCN2="银行同意免掉我们账户的转账费。"))
@@ -139,6 +141,7 @@ check "rejects cloze markup in a sentence"         "must be plain text"         
 check "rejects an incomplete context group"        "must provide Sentence, Meaning, SentenceCN, and Analysis together" node "$S/scripts/import-vocabulary.mjs" "$T/group_gap.json" --dry-run
 check "rejects an unknown Theme"                   "Theme must be one of"           node "$S/scripts/import-vocabulary.mjs" "$T/bad_theme.json" --dry-run
 check "rejects a full English part of speech"      "not a full English word"        node "$S/scripts/import-vocabulary.mjs" "$T/full_pos_word.json" --dry-run
+check "rejects a phrase entry inside a single word's gloss" "混进了短语条目"  node "$S/scripts/import-vocabulary.mjs" "$T/phrase_in_gloss.json" --dry-run --without-tts
 check "rejects non-consecutive contexts"           "contexts must be consecutive"   node "$S/scripts/import-vocabulary.mjs" "$T/nonconsecutive.json" --dry-run
 check "rejects a word already in the model"        "Words already exist in"         node "$S/scripts/import-vocabulary.mjs" "$T/duplicate_word.json" --dry-run
 check "rejects two contexts sharing one Meaning"   "的 Meaning 完全相同"     node "$S/scripts/import-vocabulary.mjs" "$T/same_meaning.json" --dry-run

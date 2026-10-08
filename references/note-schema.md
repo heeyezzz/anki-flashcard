@@ -52,9 +52,14 @@ autoplay tag would play the word twice.
 
 - `ChineseCore` carries the whole-word gloss and opens with an abbreviated part of speech:
   `v. 修改，修订；更正`, `n. 装箱单（逐箱列明内容的单证）`, `v. 遵守，符合（规定、标准、要求）`.
-  Use `n.`, `v.`, `adj.`, `adv.`, `prep.`, `pron.`, `conj.`, `det.`, `aux.`, `phr.`, and ` / `
-  between multiple roles. Full English words (`noun`, `verb`, …) are rejected, and the field must
-  contain Chinese.
+  Use `n.`, `v.`, `adj.`, `adv.`, `prep.`, `pron.`, `conj.`, `det.`, `aux.` and ` / ` between multiple
+  roles; `phr.` only when the headword itself is a phrase. Full English words (`noun`, `verb`, …) are
+  rejected, and the field must contain Chinese.
+  **Idioms and collocations do not belong in this field.** On the card for `spite`, a phrase entry such
+  as `phr. in spite of 尽管，虽然` is rejected at `--dry-run`: `ChineseCore` is what the headword itself
+  means. Write the phrase in that group's `Meaning{i}` / `Analysis{i}` instead — the back template
+  surfaces them under 助记. English inside parentheses is a usage example and stays legal
+  (`adj. 零售的（retail price 零售价）`).
   The dry-run compares the part of speech you declare with ECDICT's tags for that word
   (`scripts/lexicon.mjs`) and warns when the word is never labelled with it — a warning, not a veto:
   ECDICT aggregates several dictionaries.

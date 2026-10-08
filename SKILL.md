@@ -43,6 +43,11 @@ Four things this note type expects that the sibling importer does not:
    `Sentence{i}`.
 2. **No separate `PartOfSpeech` field.** Carry the part of speech at the start of `ChineseCore` using
    abbreviations (`v. 修改，修订；更正`). Full English words such as `verb` are rejected.
+   `ChineseCore` is the **headword's own** gloss: a single-word head may not carry English phrase
+   entries outside parentheses (`phr. in spite of 尽管` inside `spite` is rejected — that idiom belongs
+   in the group's `Meaning{i}`/`Analysis{i}`, which render in the 助记 panel), and `phr.` is only legal
+   when the headword itself is a phrase. Parenthetical examples are fine
+   (`adj. 零售的（retail price 零售价）`).
 3. **No `AudioWordAuto`, no `AudioMediaRefs`, no `[sound:...]` tags.** The back template plays the word
    automatically with its own JS player (sentence audio stays behind the row's button), so an
    Anki-native autoplay tag would play the word **twice**. `AudioSentence1..5` keep the sibling model's
