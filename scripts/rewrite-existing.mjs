@@ -119,10 +119,16 @@ const noteWords = new Set();
 // 例句难度门：除目标词以外必须落在 CEFR A2 以内（见 references/example-design.md）
 const cefr = levelCheck ? await loadCefrList() : { levels: new Map(), allowed: new Set() };
 const lexicon = await loadLexicon();
-const contextCounts = input.notes.map((note, noteIndex) =>
-  validateNote(note, noteIndex, { warnings, levelFailures, levelCheck, strictLevel, cefr, seenWords: noteWords, lexicon })
-);
-assert(!levelFailures.length, `${levelFailures.join("；")}\n例句里除目标词以外的词必须保持在 CEFR A2 以内（确需收录更难的句子时用 --no-level-check 关闭该校验）。`);
+
+/** Complete context groups present on a note, without the 3–5 rule (partial input is legal here). */
+const suppliedContexts = (note) => {
+  let count = 0;
+  for (let index = 1; index <= 5; index += 1) {
+    if (CONTEXT_FIELDS(index).every((field) => isFilledString(note[field]))) count = index;
+    else break;
+  }
+  return count;
+};
 
 const [models, decks] = await Promise.all([invoke("modelNames"), invoke("deckNames")]);
 assert(models.includes(modelName), `Missing Anki model: ${modelName}`);
@@ -144,7 +150,8 @@ const plans = input.notes.map((note, noteIndex) => {
   const target = byWord.get(normalizeWord(word));
   assert(target, `No ${modelName} note with Word "${word}" in deck ${deckName}. Use import-vocabulary.mjs to add new words.`);
   const current = Object.fromEntries(Object.entries(target.fields).map(([name, field]) => [name, field.value]));
-  const contextCount = contextCounts[noteIndex];
+  // 输入没给语境就沿用卡上现有的组数：只改 ChineseCore 时不得把例句清空。
+  const contextCount = suppliedContexts(note) || suppliedContexts(current);
   const next = {};
   const changes = [];
 
@@ -159,7 +166,7 @@ const plans = input.notes.map((note, noteIndex) => {
     const fields = CONTEXT_FIELDS(index);
     if (index <= contextCount) {
       for (const field of fields) {
-        const value = String(note[field]).trim();
+        const value = String(note[field] ?? current[field] ?? "").trim();
         if (value !== current[field]) changes.push({ field, from: current[field], to: value });
         next[field] = value;
       }
@@ -198,8 +205,20 @@ const plans = input.notes.map((note, noteIndex) => {
     (other) => other.noteId !== target.noteId && Object.values(other.fields).some((field) => mediaName(field.value) === name)
   ));
 
-  return { word, noteId: target.noteId, contextCount, changes, audio, mediaToDelete, next };
+  return { word, noteId: target.noteId, contextCount, changes, audio, mediaToDelete, current, next };
 });
+
+// 校验**合并后**的笔记，不是输入本身：只改 ChineseCore 时输入里没有 IPA、例句这些必填字段，
+// 拿输入去跑完整校验会误报"字段缺失"，逼调用方把 17 个字段全量重传一遍。
+plans.forEach((plan, noteIndex) => {
+  // 写回后的真实状态 = 现值打底 + 本次改动（输入里没给的字段沿用现值，不是空）
+  const merged = { ...plan.current, ...plan.next };
+  const counted = validateNote(merged, noteIndex, {
+    warnings, levelFailures, levelCheck, strictLevel, cefr, seenWords: noteWords, lexicon,
+  });
+  assert(counted === plan.contextCount, `${plan.word}: 合并后是 ${counted} 组语境，与计划的 ${plan.contextCount} 组不一致。`);
+});
+assert(!levelFailures.length, `${levelFailures.join("；")}\n例句里除目标词以外的词必须保持在 CEFR A2 以内（确需收录更难的句子时用 --no-level-check 关闭该校验）。`);
 
 if (!confirmed) {
   console.log(JSON.stringify({

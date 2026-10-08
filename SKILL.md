@@ -251,6 +251,9 @@ node "$SKILL_DIR/scripts/rewrite-existing.mjs" /absolute/path/rewrite.json --dec
 
 - It matches notes by `Word` **inside `--deck` only**, and refuses a word that is not there: this
   script never creates notes — use the importer for new words.
+- **Partial input is legal**: pass only the fields you are changing (`{"Word":"spite","ChineseCore":"…"}`).
+  Validation runs on the note as it will read **after** the merge, and context groups the input omits are
+  kept, not cleared — pass fewer than 3 groups only when you also pass the sentences they belong to.
 - The same `note-rules.mjs` validation and A2 gate as the importer run first, and the mandatory content
   confirmation applies identically: `--dry-run` → user approves → `--confirmed`.
 - Audio filenames are content-addressed, so an unchanged sentence keeps its clip and only the edited
@@ -312,6 +315,7 @@ scripts/ensure-audio-fields.mjs      语音字段只读体检（--apply 修复�
 scripts/verify-import.mjs            独立验收：字段/媒体/单卡/正面无答案泄漏（--deck / --word）
 scripts/render-card.mjs              离线渲染真卡：从集合现拉字段 + mustache 子集 + headless Chrome 截图（窄屏走 iframe）
 scripts/template-push.mjs            模板与 CSS 的快照 / 比对 / 推送（git HEAD 基线守卫 + 逐字节读回）
+scripts/audit-gloss.mjs              只读体检：ECDICT 地板 vs 卡面释义的差异清单（启发式，不是闸门）
 scripts/note-rules.mjs               内容规则单一来源（导入与改写共用同一套校验，含检索条件查重）
 scripts/level-check.mjs              A2 难度校验：CEFR 词表 + 屈折展开 + 自备白名单
 scripts/lexicon.mjs                  ECDICT 对账：ChineseCore 词性、IPA、义项顺序（只出警告）+ 词典底串 dictionary.core

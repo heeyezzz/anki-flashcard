@@ -169,8 +169,9 @@ const hanzi = (text) => (String(text).match(/[\u3400-\u9fff]/g) || []);
  * speech at all (typical for phrasal entries like "comply with" = 照做) — and the AI writes it instead.
  */
 export const dictionaryCore = (entry) => {
-  // ECDICT 的 translation 用换行分隔词性组，而 CSV 里存的是**字面** \n（两个字符）。
-  // 不先归一，`n. 恶意\nvt. 故意刁难` 会被当成同一个 n. 组，或者把 `怨恨\nvt.` 整个当义项漏进卡面。
+  // 加固：原始 ECDICT CSV 用换行分隔词性组，且 CSV 里是**字面** \n（两个字符）。仓库实际喂进来
+  // 的是 assets/ecdict-mini.tsv，构建时已把换行换成 `；`，所以这条路径此前也出正确的组；
+  // 但任何直接拿 CSV 原文调用的人都会踩到 `n. 恶意\nvt. 故意刁难` 被并成一个 n. 组。
   const raw = String(entry?.raw || entry?.senses || "").replace(/\\n/g, "\n").replace(META_PAREN, " ");
   if (!raw.trim()) return null;
   const groups = [];
