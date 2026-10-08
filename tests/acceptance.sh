@@ -272,6 +272,12 @@ check "the floor keeps the general gloss"        'n. 特许，让步'   node -e 
 check_absent "the floor drops domain-tagged gloss" '核准'          node -e "$FLOOR"
 check "a pos-less gloss falls back with a reason" '无词性'         node -e "import('$S/scripts/lexicon.mjs').then(async m => { console.log(m.dictionaryCore({ raw: '照做' }).reason); })"
 check "dry-run carries the dictionary floor"     '"core"'         node "$S/scripts/import-vocabulary.mjs" "$T/ok.json" --dry-run --without-tts
+# ECDICT 用换行分隔词性组，而 CSV 里存的是字面 \n：不先归一，vt. 组会被并进 n.
+FLOOR_NL="import('$S/scripts/lexicon.mjs').then(m => { console.log(m.dictionaryCore({ raw: 'n. 恶意, 怨恨' + String.fromCharCode(92) + 'nvt. 故意刁难, 欺侮' }).core); })"
+check "a literal \\n starts a new part-of-speech group" 'n. 恶意，怨恨；v. 故意刁难，欺侮' node -e "$FLOOR_NL"
+check_absent "the literal \\n never leaks into the floor"  '\\nvt'            node -e "$FLOOR_NL"
+FLOOR_TAG="import('$S/scripts/lexicon.mjs').then(m => { console.log(m.dictionaryCore({ raw: 'n. 特许, 让步, 认可' + String.fromCharCode(10) + '[经] 核准, 许可' }).core); })"
+check_absent "a domain-tagged group after a newline is dropped" '核准'          node -e "$FLOOR_TAG"
 
 echo "== 10. 模板不变量（共用函数一致 / 无死 CSS / 音频独占）=="
 check "template invariants all hold" "模板不变量全部通过" node "$S/tests/template-invariants.mjs"

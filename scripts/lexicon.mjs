@@ -169,10 +169,12 @@ const hanzi = (text) => (String(text).match(/[\u3400-\u9fff]/g) || []);
  * speech at all (typical for phrasal entries like "comply with" = 照做) — and the AI writes it instead.
  */
 export const dictionaryCore = (entry) => {
-  const raw = String(entry?.raw || entry?.senses || "").replace(META_PAREN, " ");
+  // ECDICT 的 translation 用换行分隔词性组，而 CSV 里存的是**字面** \n（两个字符）。
+  // 不先归一，`n. 恶意\nvt. 故意刁难` 会被当成同一个 n. 组，或者把 `怨恨\nvt.` 整个当义项漏进卡面。
+  const raw = String(entry?.raw || entry?.senses || "").replace(/\\n/g, "\n").replace(META_PAREN, " ");
   if (!raw.trim()) return null;
   const groups = [];
-  for (const chunk of raw.split(/[；;]/)) {
+  for (const chunk of raw.split(/[；;\n]/)) {
     // A chunk that opens with a domain tag is a subject-specific gloss ([计]/[经]/[法]/[医]…): out.
     if (/^\s*\[[^\]]*\]/.test(chunk)) continue;
     const head = chunk.match(POS_HEAD);
