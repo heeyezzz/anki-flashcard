@@ -271,7 +271,10 @@
 
   // 词典串 → 词性组。分隔符是「；」和词性组之间的「 / 」；括号内的标点不算分隔符。
   // 词性只写在组的第一项，这里按它分组，词性一变即新起一组（渲染成左侧徽标）。
-  const POS_HEAD = /^((?:n|v|vt|vi|adj|adv|prep|conj|pron|num|art|int|aux|abbr|excl)\.)\s*/i;
+  // 这份缩写表抄自 scripts/lexicon.mjs 的 CARD_POS（模板不能 import），
+  // 两边集合是否一致由 tests/template-invariants.mjs 断言——少一个 phr 就会把
+  // 「phr. in spite of 尽管」挂到上一组的 n 徽标下面。
+  const POS_HEAD = /^((?:phr|prep|pron|conj|abbr|art|aux|adj|adv|excl|det|num|int|vt|vi|n|v)\.)\s*/i;
   const splitGroups = (raw) => {
     const groups = [];
     let buf = "";

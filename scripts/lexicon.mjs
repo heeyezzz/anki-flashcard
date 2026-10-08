@@ -142,6 +142,16 @@ const POS_CANON = {
   a: "adj.", adj: "adj.", ad: "adv.", adv: "adv.", prep: "prep.", pron: "pron.", conj: "conj.",
   det: "det.", art: "det.", num: "num.", int: "int.", phr: "phr."
 };
+
+/**
+ * 卡面允许出现在义项组开头的词性缩写（不带句点）。这是**唯一来源**：
+ * 模板不能 import，所以 Back.html 里的 POS_HEAD 抄一份，由
+ * tests/template-invariants.mjs 断言两边集合相等——曾经因为模板少抄了
+ * phr / det，导致 `phr. in spite of 尽管` 被挂到上一组的 `n` 徽标下面。
+ */
+export const CARD_POS = [...new Set(Object.values(POS_CANON).map((tag) => tag.replace(/\.$/, "")))]
+  .concat(["vt", "vi", "aux", "art", "abbr", "excl"])
+  .sort();
 const POS_HEAD = /^\s*([a-z]{1,6})\.\s*/;
 // "(house-breaker 的复数)" — dictionary meta text, not a gloss. Chinese-only parens like 特殊(权) stay.
 const META_PAREN = /\([^)]*[A-Za-z][^)]*\)|（[^）]*[A-Za-z][^）]*）/g;

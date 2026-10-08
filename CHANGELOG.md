@@ -6,6 +6,14 @@
 
 ## 2026-10-06
 
+**第十四轮 · 修复 `phr.` / `det.` 义项被挂到上一个词性徽标下面。** 现象（真卡 `spite`）：
+`n. 恶意，怨恨 / phr. in spite of 尽管，虽然 / in spite of oneself 不由自主地` 渲染成三条都顶着 `n` 徽标，
+`phr.` 只是行内普通文字。根因是仓库里有两份词性表且不一致：`scripts/lexicon.mjs` 的 `POS_CANON`
+会产出 `phr.`/`det.`，而 `Back.html` 的 `POS_HEAD` 白名单里没有它们，于是 `splitGroups()` 不为它们开新组。
+修法：`lexicon.mjs` 导出 `CARD_POS`（17 项，唯一来源），模板抄一份并在注释里点名来源，
+`tests/template-invariants.mjs` 新增一项断言两边集合相等（反向对照过：旧表会被报"缺 det、phr"）。
+纯渲染层，笔记与音频未动。
+
 **第十三轮 · 去掉例句与助记的编号，整卡再压一档。** 编号和它那层 `.mctx-other-heading`
 一起从两个模板删掉（CSS 的 heading/index 规则与包豪斯红色序号规则同步删，`data-i` 已无人读取也删）。
 喇叭因此改成绝对定位在行的右上角（`.mctx-other-item { position:relative; padding-right:30px }` +

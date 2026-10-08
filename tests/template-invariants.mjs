@@ -20,6 +20,7 @@ import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { page, TEMPLATES_DIR } from "../scripts/render-card.mjs";
+import { CARD_POS } from "../scripts/lexicon.mjs";
 
 const CHROME = process.env.CHROME_PATH
   || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
@@ -45,6 +46,18 @@ for (const name of ["mctxPattern", "bindPlaying", "text"]) {
   check(`正背面共用函数一致: ${name}`, Boolean(a) && a === b,
     a === null || b === null ? "有一边找不到该函数定义" : `${a.length} 字符`);
 }
+
+/** 模板 POS_HEAD 的词性缩写必须与 lexicon 的 CARD_POS 相等：少一个就会把该词性的义项
+ *  挂到上一组徽标下面（`phr. in spite of 尽管` 曾被挂到 `n` 下面）。 */
+const posLiteral = (back.match(/const POS_HEAD = (\/.*\/[a-z]*)/) || [])[1] || "";
+const templatePos = (posLiteral.match(/\(\?:([a-z|]+)\)/) || [])[1];
+const templateSet = templatePos ? new Set(templatePos.split("|")) : new Set();
+const missing = CARD_POS.filter((pos) => !templateSet.has(pos));
+const extra = [...templateSet].filter((pos) => !CARD_POS.includes(pos));
+check("模板词性缩写表与 lexicon.CARD_POS 一致",
+  Boolean(templatePos) && missing.length === 0 && extra.length === 0,
+  templatePos ? `共 ${CARD_POS.length} 项${missing.length ? `；模板缺 ${missing.join("、")}` : ""}${extra.length ? `；模板多出 ${extra.join("、")}` : ""}`
+    : `没能从 Back.html 里解析出 POS_HEAD：${posLiteral.slice(0, 60)}`);
 
 const ANKI_INJECTED = new Set(["nightMode", "card", "cardTemplate", "mid", "tid", "day", "night"]);
 const used = new Set([...front.matchAll(/[\w-]+/g)].map((m) => m[0]));
