@@ -13,6 +13,7 @@
 import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { loadKnownWords } from "./known-words.mjs";
 
 const DEFAULT_LIST = resolve(dirname(fileURLToPath(import.meta.url)), "../assets/cefr-j-words.tsv");
 const EXTRA_LIST = resolve(dirname(fileURLToPath(import.meta.url)), "../assets/allow-extra.txt");
@@ -55,7 +56,11 @@ const readWordLines = async (path) => {
   }
 };
 
-/** Load the CEFR list plus the user's own allow list. Returns { levels: Map<form, band>, allowed: Set<form> }. */
+/**
+ * Load the CEFR list, the hand-written allow list, and the learner's own TapDict wordbook.
+ * Returns { levels: Map<form, band>, allowed: Set<form>, known } — `known` carries the wordbook
+ * status so callers can print it (count, path, how stale the export is).
+ */
 export const loadCefrList = async (path = DEFAULT_LIST) => {
   const source = await readFile(path, "utf8");
   const levels = new Map();
@@ -82,7 +87,16 @@ export const loadCefrList = async (path = DEFAULT_LIST) => {
       allowed.add(form);
     }
   }
-  return { levels, allowed };
+  // 个人词库：自己标过「认识」的词直接豁免。A2 门要挡的是"第二个生词"，
+  // CEFR 档位只是在不知道词库时的代理；有词库时词库是更准的证据。
+  const known = await loadKnownWords();
+  for (const word of known.words) {
+    for (const form of expandForms(word)) {
+      if (!allowed.has(form)) levels.set(form, "known");
+      allowed.add(form);
+    }
+  }
+  return { levels, allowed, known };
 };
 
 /**

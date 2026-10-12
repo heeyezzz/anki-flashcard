@@ -109,8 +109,12 @@ line breaks into the field; and `Meaning{i}` is only reachable through the `【�
    analysis — in the user's own language. Show `ChineseCore` **next to** `dictionary.core` so the
    dictionary floor and your wording can be compared line by line, and say plainly when
    `dictionary.usable` is false and you wrote the gloss yourself. The dry-run also lists every token that sits above CEFR A2
-   in a sentence: rewrite those sentences first (`references/example-design.md`), or exempt words the
-   learner already knows in `assets/allow-extra.txt`. It also flags two contexts whose sentences are
+   in a sentence: rewrite those sentences first (`references/example-design.md`), unless the word is
+   one the learner already knows — exempted by the **TapDict personal wordbook**
+   (`scripts/known-words.mjs`, read from `~/Documents/Project/查词插件/wordbook-latest.json`, override with
+   `WORDBOOK_JSON`) or by `assets/allow-extra.txt`. The gate's point is "no second *unknown* word", so a
+   marked-known word is exempt at any band; the dry-run prints the wordbook status (count, and a nag if
+   the export is more than 7 days old). Missing wordbook → the pure CEFR rule. It also flags two contexts whose sentences are
    lightly edited copies of one another (`个实词相同`) — those are one retrieval condition, rewrite one
    of them the same way. And it cross-checks the card against ECDICT (`scripts/lexicon.mjs`): a
    `ChineseCore` part of speech the dictionary never assigns that word, or an `IPA` far from its
@@ -327,7 +331,7 @@ scripts/render-card.mjs              离线渲染真卡：从集合现拉字段 
 scripts/template-push.mjs            模板与 CSS 的快照 / 比对 / 推送（git HEAD 基线守卫 + 逐字节读回）
 scripts/audit-gloss.mjs              只读体检：ECDICT 地板 vs 卡面释义的差异清单（启发式，不是闸门）
 scripts/note-rules.mjs               内容规则单一来源（导入与改写共用同一套校验，含检索条件查重）
-scripts/level-check.mjs              A2 难度校验：CEFR 词表 + 屈折展开 + 自备白名单
+scripts/level-check.mjs              A2 难度校验：CEFR 词表 + 屈折展开 + 自备白名单 + 个人词库豁免
 scripts/lexicon.mjs                  ECDICT 对账：ChineseCore 词性、IPA、义项顺序（只出警告）+ 词典底串 dictionary.core
 scripts/build-lexicon-assets.mjs     从 ECDICT 重建 assets/ecdict-mini.tsv 与不规则变化表（会并入 Anki 现有牌词，覆盖短语卡）
 assets/cefr-j-words.tsv               CEFR-J/Octanove 词表（7035 词条，含等级）
@@ -336,6 +340,8 @@ assets/allow-extra.txt                自备白名单：你已掌握的专业词
 assets/irregular-forms.txt            不规则变化（made/found/meant…）不算超纲；现由构建脚本生成
 scripts/minimax-tts.mjs              TTS 调用与确定性文件名
 scripts/minimax-credentials.mjs      key：env → Keychain → .env
+scripts/youdao-tts.mjs               单词发音：有道词典录音（免费、只认词条；句子取不到）
+scripts/known-words.mjs              读 TapDict 个人词库 wordbook-latest.json：认识的词豁免 A2 门
 tests/acceptance.sh                  验收套件（自带 PASS/FAIL 计数；只写 测试::anki-flashcard验收 夹具牌组）
 tests/template-invariants.mjs        模板不变量：正背面共用函数逐字节一致 / 无死 CSS / 同一时刻只有一个声音
 templates/微语境闪卡-1.0/             当前 Front/Back/CSS 副本 + 现在的卡面形态说明；template-push.mjs 以此为准推送

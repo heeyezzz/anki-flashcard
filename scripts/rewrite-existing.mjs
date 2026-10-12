@@ -28,6 +28,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { cleanSpeechText, createMediaFilename, MINIMAX_TTS_ENDPOINT, synthesizeMiniMax } from "./minimax-tts.mjs";
 import { getMiniMaxApiKey } from "./minimax-credentials.mjs";
 import { synthesizeYoudao, wordAudioSource, WORD_TTS_CHOICES } from "./youdao-tts.mjs";
+import { knownWordsNotice } from "./known-words.mjs";
 import { loadCefrList } from "./level-check.mjs";
 import { loadLexicon } from "./lexicon.mjs";
 import {
@@ -233,6 +234,7 @@ if (!confirmed) {
     dryRun: true,
     deckName,
     modelName,
+    levelGate: { cefr: true, wordbook: knownWordsNotice(cefr.known ?? { missing: true, count: 0, path: "未加载" }) },
     tts: tts.enabled ? { provider: tts.provider, voiceId: tts.voiceId, model: tts.model, speed: tts.speed } : null,
     notes: plans.map((plan) => ({
       word: plan.word,

@@ -18,8 +18,11 @@ two near-identical rows sit next to each other instead of appearing on separate 
    the situation has to be legible from the sentence itself.
 2. **Precise, non-spoiling clues.** The surrounding words should make the target word the clearly best
    answer without defining it. Avoid frames where many unrelated words fit.
-3. **Everything except the target word stays inside CEFR A2.** This is a hard content rule for this
-deck: the learner must be able to read the whole sentence without meeting a second unknown word.
+3. **Everything except the target word must be a word the learner already knows.** The rule exists so
+reading the card never hits a second unknown word. CEFR A2 is the proxy used when nothing better is
+known; two sources override it — the TapDict personal wordbook (`scripts/known-words.mjs`; 3144 words
+as of 2026-10-12) and `assets/allow-extra.txt`. A word in either is exempt even at B1/B2; a word in
+neither is judged by its band, and the wordbook does not soften that.
    Concretely:
    - vocabulary: A1/A2 words only. No B1+ business nouns (`penalty`, `clause`, `inspection`,
      `shipment`), no nominalizations where a plain verb exists (`reimbursement` → `pay back`), no

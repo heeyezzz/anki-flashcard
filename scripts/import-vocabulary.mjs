@@ -18,6 +18,7 @@ import { readFile } from "node:fs/promises";
 import { cleanSpeechText, createMediaFilename, MINIMAX_TTS_ENDPOINT, synthesizeMiniMax } from "./minimax-tts.mjs";
 import { getMiniMaxApiKey } from "./minimax-credentials.mjs";
 import { synthesizeYoudao, wordAudioSource, WORD_TTS_CHOICES } from "./youdao-tts.mjs";
+import { knownWordsNotice } from "./known-words.mjs";
 import { loadCefrList } from "./level-check.mjs";
 import { loadLexicon, senseHint } from "./lexicon.mjs";
 import {
@@ -235,6 +236,7 @@ if (dryRun) {
     deckName: input.deckName,
     tags,
     lexicon: { present: lexicon.present, entries: lexicon.entries.size },
+    levelGate: { cefr: true, wordbook: knownWordsNotice(cefr.known ?? { missing: true, count: 0, path: "未加载" }) },
     preview: input.notes.map((note, index) => ({
       word: note.Word.trim(),
       ipa: note.IPA.trim(),

@@ -279,6 +279,13 @@ check_absent "the literal \\n never leaks into the floor"  '\\nvt'            no
 FLOOR_TAG="import('$S/scripts/lexicon.mjs').then(m => { console.log(m.dictionaryCore({ raw: 'n. 特许, 让步, 认可' + String.fromCharCode(10) + '[经] 核准, 许可' }).core); })"
 check_absent "a domain-tagged group after a newline is dropped" '核准'          node -e "$FLOOR_TAG"
 
+echo "== 10a. 个人词库豁免（认识的词不该被 A2 门拦住）=="
+GATE="import('$S/scripts/level-check.mjs').then(async (m) => { const c = await m.loadCefrList(); const hits = m.findAboveLevel('The attorney needs a chronic dose.', { targetForms: new Set(['dose']), levels: c.levels, allowed: c.allowed }); console.log('known=' + c.known.count + ' missing=' + c.known.missing + ' flagged=' + hits.map((h) => h.token).join('+')); })"
+check "词库已加载且词库内的词不再报警" "missing=false" node -e "$GATE"
+GATE2="import('$S/scripts/level-check.mjs').then(async (m) => { const c = await m.loadCefrList(); const hits = m.findAboveLevel('A meticulous audit follows.', { targetForms: new Set(), levels: c.levels, allowed: c.allowed }); console.log('flagged=' + hits.map((h) => h.token).join('+')); })"
+check "词库外的难词仍然报警" "flagged=meticulous+audit" node -e "$GATE2"
+check "dry-run 报出词库状态"        '"wordbook"'           node "$S/scripts/import-vocabulary.mjs" "$T/ok.json" --dry-run --without-tts
+
 echo "== 10b. 音频来源分流（单词走有道，例句走 MiniMax）=="
 FP=$(node -e "
 const y = await import('$S/scripts/youdao-tts.mjs');
