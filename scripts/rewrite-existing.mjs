@@ -253,7 +253,11 @@ assert(tts.enabled, "--confirmed requires TTS: without it the audio fields would
 // Snapshot what the notes look like now, so a bad rewrite can be rolled back.
 await mkdir(backupDir, { recursive: true });
 const stamp = new Date().toISOString().replace(/[-:.]/g, "").slice(0, 15);
-const backupPath = join(backupDir, `${stamp}-${plans.map((plan) => normalizeWord(plan.word).replace(/\s+/g, "-")).join("_")}.json`);
+// 文件名只放前 6 个词 + 总数：批量改写 27 个词时全拼会撞上 macOS 255 字节的文件名上限
+// （ENAMETOOLONG，且发生在写入之前，所以整批一张都没改成）。
+const words = plans.map((plan) => normalizeWord(plan.word).replace(/\s+/g, "-"));
+const label = words.length <= 6 ? words.join("_") : `${words.slice(0, 6).join("_")}_plus${words.length - 6}`;
+const backupPath = join(backupDir, `${stamp}-${label}.json`);
 await writeFile(backupPath, JSON.stringify({
   modelName,
   deckName,
