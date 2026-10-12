@@ -1,20 +1,24 @@
 #!/usr/bin/env node
 /**
- * anki-flashcard — add MiniMax audio to 微语境闪卡 1.0 notes that are already in a deck.
+ * anki-flashcard — fill missing audio on 微语境闪卡 1.0 notes already in a deck:
+ * 单词默认走有道词典录音（--word-tts），例句仍走 MiniMax。
  * Never overwrites a filename that is already stored, unless --refresh asks for it.
  */
 import { cleanSpeechText, createMediaFilename, MINIMAX_TTS_ENDPOINT, synthesizeMiniMax } from "./minimax-tts.mjs";
 import { getMiniMaxApiKey } from "./minimax-credentials.mjs";
+import { synthesizeYoudao, wordAudioSource, WORD_TTS_CHOICES } from "./youdao-tts.mjs";
 
 const API_URL = process.env.ANKI_CONNECT_URL || "http://127.0.0.1:8766";
 const MODEL_NAME = process.env.ANKI_FLASHCARD_MODEL || "微语境闪卡 1.0";
 const AUDIO_FIELDS = ["WordAudio", ...Array.from({ length: 5 }, (_, index) => `AudioSentence${index + 1}`)];
-const usage = "Usage: node add-audio-to-existing.mjs --deck DECK_NAME --minimax-voice VOICE_ID [--word WORD] [--refresh] [--dry-run] [--minimax-model MODEL] [--minimax-speed NUMBER] [--minimax-min-interval-ms NUMBER] [--minimax-api-key-env NAME] [--minimax-keychain-service NAME] [--minimax-env-file PATH] [--minimax-endpoint URL] [--media-prefix PREFIX]";
+const usage = "Usage: node add-audio-to-existing.mjs --deck DECK_NAME --minimax-voice VOICE_ID [--word WORD] [--refresh] [--dry-run] [--minimax-model MODEL] [--minimax-speed NUMBER] [--minimax-min-interval-ms NUMBER] [--minimax-api-key-env NAME] [--minimax-keychain-service NAME] [--minimax-env-file PATH] [--minimax-endpoint URL] [--media-prefix PREFIX] [--word-tts youdao|youdao-us|minimax]";
 const options = process.argv.slice(2);
 const config = {
   deckName: "", word: "", refresh: false, dryRun: false, voiceId: "", model: "speech-2.8-hd", speed: 1,
   minIntervalMs: 11000, apiKeyEnv: "MINIMAX_API_KEY", keychainService: "anki-minimax-tts", envFile: "",
-  endpoint: MINIMAX_TTS_ENDPOINT, mediaPrefix: "minimax"
+  endpoint: MINIMAX_TTS_ENDPOINT, mediaPrefix: "minimax",
+  // 单词发音默认走有道词典录音；例句永远走 MiniMax。
+  wordTts: "youdao"
 };
 for (let index = 0; index < options.length; index += 1) {
   const option = options[index];
@@ -33,6 +37,10 @@ for (let index = 0; index < options.length; index += 1) {
   else if (option === "--minimax-env-file") config.envFile = value;
   else if (option === "--minimax-endpoint") config.endpoint = value;
   else if (option === "--media-prefix") config.mediaPrefix = value;
+  else if (option === "--word-tts") {
+    if (!WORD_TTS_CHOICES.includes(value)) throw new Error(`--word-tts 只能是 ${WORD_TTS_CHOICES.join("、")}。`);
+    config.wordTts = value;
+  }
   else throw new Error(usage);
   index += 1;
 }
@@ -80,12 +88,13 @@ for (const note of notes) {
   if (slots.length < 3) warnings.push(`${word} has only ${slots.length} sentence(s); the card still works but 3–5 contexts are the intended design.`);
   const sentence = (slot) => cleanSpeechText(note.fields[`Sentence${slot}`].value);
   const targets = [
-    { field: "WordAudio", slot: "word", text: cleanSpeechText(word) },
-    ...slots.map((slot) => ({ field: `AudioSentence${slot}`, slot: `sentence-${slot}`, text: sentence(slot) }))
+    { field: "WordAudio", slot: "word", text: cleanSpeechText(word), ...wordAudioSource(config.wordTts, config) },
+    ...slots.map((slot) => ({ field: `AudioSentence${slot}`, slot: `sentence-${slot}`, text: sentence(slot),
+      provider: "minimax", model: config.model, voiceId: config.voiceId, speed: config.speed, prefix: config.mediaPrefix }))
   ].map((target) => {
     const filename = createMediaFilename({
-      word, slot: target.slot, text: target.text, model: config.model,
-      voiceId: config.voiceId, speed: config.speed, prefix: config.mediaPrefix
+      word, slot: target.slot, text: target.text, model: target.model,
+      voiceId: target.voiceId, speed: target.speed, prefix: target.prefix
     });
     const stored = note.fields[target.field]?.value?.trim() || "";
     // Refill when the field is empty, or when --refresh says the stored file no longer matches
@@ -125,10 +134,15 @@ for (const entry of todo) {
   const updates = Object.fromEntries(AUDIO_FIELDS.map((field) => [field, ""]));
   for (const target of entry.targets) {
     if (target.needed && !await invoke("retrieveMediaFile", { filename: target.filename })) {
-      apiKey ||= await getMiniMaxApiKey(config);
-      const audio = await synthesizeMiniMax({ apiKey, endpoint: config.endpoint, text: target.text, model: config.model, voiceId: config.voiceId, speed: config.speed, minIntervalMs: config.minIntervalMs });
-      await invoke("storeMediaFile", { filename: target.filename, data: audio.audioBase64 });
-      generatedCharacters += audio.usageCharacters;
+      const clip = target.provider === "youdao"
+        // 免费词典录音：拉不到就抛错停下，绝不静默改用付费合成。
+        ? await synthesizeYoudao({ text: target.text, accent: target.accent })
+        : await (async () => {
+          apiKey ||= await getMiniMaxApiKey(config);
+          return synthesizeMiniMax({ apiKey, endpoint: config.endpoint, text: target.text, model: target.model, voiceId: target.voiceId, speed: target.speed, minIntervalMs: config.minIntervalMs });
+        })();
+      await invoke("storeMediaFile", { filename: target.filename, data: clip.audioBase64 });
+      generatedCharacters += clip.usageCharacters ?? 0;
     }
     updates[target.field] = target.filename;
   }

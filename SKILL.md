@@ -31,7 +31,7 @@ anything is written, `--finish` syncs and quits it after a verified run.
 | `Sentence{i}` `Meaning{i}` `SentenceCN{i}` `Analysis{i}` | input JSON | 3–5 consecutive groups |
 | `Theme` | input JSON | `bauhaus` (default) or `minimal` |
 | `OtherMeanings` `Source` | input JSON | optional; `OtherMeanings` renders in a collapsed 其他义项 block |
-| `WordAudio` `AudioSentence1..5` | **only the scripts** | raw MP3 filenames; never put them in input JSON |
+| `WordAudio` `AudioSentence1..5` | **only the scripts** | raw MP3 filenames; never put them in input JSON. Word clips default to Youdao, sentence clips to MiniMax |
 
 Four things this note type expects that the sibling importer does not:
 
@@ -139,11 +139,21 @@ existing model and deck and never creates or edits either. It validates 3–5 co
 groups, rejects markup and sentences the template cannot highlight, rejects words already present in
 the model, calls `canAddNotes`, adds notes, and reads every field back.
 
-## Required MiniMax audio
+## Audio: word from Youdao, sentences from MiniMax
 
-Audio is on by default: `speech-2.8-hd`, `English_Steady_Female_1`, speed `1`, one request per word
-plus one per populated sentence (four to six paid requests per uncached note). `--dry-run` reports how
-many files already exist in the media collection and how many would be generated, so state that cost
+**Word pronunciation defaults to the Youdao dictionary recording** (`--word-tts youdao|youdao-us|minimax`).
+It is free and it is a human dictionary reading of the actual headword, which suits "how does this word
+sound" better than a synthesised voice. It is a *dictionary* endpoint, not TTS: only entries the
+dictionary carries have audio — words and phrasal headwords (`comply with`, `in spite of`) return MP3,
+while **any sentence returns HTTP 500 `returned null audio`**, even `"She trembled."`. Sentence audio
+therefore always stays on MiniMax. The endpoint is unofficial: no SLA, may rate-limit or change. A
+failed fetch aborts the run — it never silently falls back to the paid synthesiser. `tests/acceptance.sh`
+asserts that contract, plus that the provider and accent are baked into the content-addressed filename
+(so switching sources re-records instead of reusing the old clip). Do not redistribute the fetched audio.
+
+Sentence synthesis is unchanged: `speech-2.8-hd`, `English_Steady_Female_1`, speed `1`, one paid request
+per populated sentence (three to five per uncached note, plus one more if `--word-tts minimax`).
+`--dry-run` lists every clip with its provider and whether it is reused or new, so state that cost
 before asking for confirmation. Read [the MiniMax guide](references/minimax-tts.md) first.
 
 The key comes from `$MINIMAX_API_KEY`, the macOS Keychain item `anki-minimax-tts`, or a local `.env`.

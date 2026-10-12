@@ -27,6 +27,7 @@ import { join } from "node:path";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { cleanSpeechText, createMediaFilename, MINIMAX_TTS_ENDPOINT, synthesizeMiniMax } from "./minimax-tts.mjs";
 import { getMiniMaxApiKey } from "./minimax-credentials.mjs";
+import { synthesizeYoudao, wordAudioSource, WORD_TTS_CHOICES } from "./youdao-tts.mjs";
 import { loadCefrList } from "./level-check.mjs";
 import { loadLexicon } from "./lexicon.mjs";
 import {
@@ -37,7 +38,7 @@ import {
 const DEFAULT_API_URL = "http://127.0.0.1:8766";
 const DEFAULT_MODEL_NAME = process.env.ANKI_FLASHCARD_MODEL || "微语境闪卡 1.0";
 const DEFAULT_BACKUP_DIR = join(homedir(), ".hermes", "cache", "anki-flashcard", "backups");
-const usage = "Usage: node rewrite-existing.mjs /absolute/path/to/notes.json --deck DECK [--dry-run] [--confirmed] [--without-tts] [--strict-level] [--no-level-check] [--anki-connect-url URL] [--backup-dir DIR] [--tts minimax --minimax-voice VOICE_ID] [--minimax-model MODEL] [--minimax-speed NUMBER] [--minimax-min-interval-ms NUMBER] [--minimax-api-key-env NAME] [--minimax-keychain-service NAME] [--minimax-env-file PATH] [--minimax-endpoint URL] [--media-prefix PREFIX]";
+const usage = "Usage: node rewrite-existing.mjs /absolute/path/to/notes.json --deck DECK [--dry-run] [--confirmed] [--without-tts] [--strict-level] [--no-level-check] [--anki-connect-url URL] [--backup-dir DIR] [--tts minimax --minimax-voice VOICE_ID] [--minimax-model MODEL] [--minimax-speed NUMBER] [--minimax-min-interval-ms NUMBER] [--minimax-api-key-env NAME] [--minimax-keychain-service NAME] [--minimax-env-file PATH] [--minimax-endpoint URL] [--media-prefix PREFIX] [--word-tts youdao|youdao-us|minimax]";
 
 const [inputPath, ...options] = process.argv.slice(2);
 let dryRun = false;
@@ -60,6 +61,8 @@ const tts = {
   endpoint: MINIMAX_TTS_ENDPOINT,
   mediaPrefix: "minimax"
 };
+// 单词发音默认走有道词典录音；例句永远走 MiniMax。
+let wordTts = "youdao";
 
 if (!inputPath || inputPath.startsWith("--")) throw new Error(usage);
 for (let index = 0; index < options.length; index += 1) {
@@ -84,6 +87,10 @@ for (let index = 0; index < options.length; index += 1) {
   else if (option === "--minimax-env-file") tts.envFile = value;
   else if (option === "--minimax-endpoint") tts.endpoint = value;
   else if (option === "--media-prefix") tts.mediaPrefix = value;
+  else if (option === "--word-tts") {
+    if (!WORD_TTS_CHOICES.includes(value)) throw new Error(`--word-tts 只能是 ${WORD_TTS_CHOICES.join("、")}。`);
+    wordTts = value;
+  }
   else throw new Error(usage);
   index += 1;
 }
@@ -181,21 +188,22 @@ const plans = input.notes.map((note, noteIndex) => {
   // Audio: the filename is derived from the spoken text, so an unchanged sentence keeps its file.
   const spokenWord = next.Word ?? current.Word;
   const audio = [
-    { field: "WordAudio", slot: "word", text: cleanSpeechText(spokenWord) },
+    { field: "WordAudio", slot: "word", text: cleanSpeechText(spokenWord), ...wordAudioSource(wordTts, tts) },
     ...Array.from({ length: contextCount }, (_, index) => ({
       field: `AudioSentence${index + 1}`,
       slot: `sentence-${index + 1}`,
-      text: cleanSpeechText(next[`Sentence${index + 1}`] ?? current[`Sentence${index + 1}`])
+      text: cleanSpeechText(next[`Sentence${index + 1}`] ?? current[`Sentence${index + 1}`]),
+      provider: "minimax", model: tts.model, voiceId: tts.voiceId, speed: tts.speed, prefix: tts.mediaPrefix
     }))
   ].map((source) => {
     const filename = createMediaFilename({
-      word: spokenWord, slot: source.slot, text: source.text, model: tts.model, voiceId: tts.voiceId,
-      speed: tts.speed, prefix: tts.mediaPrefix
+      word: spokenWord, slot: source.slot, text: source.text, model: source.model, voiceId: source.voiceId,
+      speed: source.speed, prefix: source.prefix
     });
     // Reuse only a clip that is both referenced by the field and really present in the collection.
     const state = mediaName(current[source.field]) === filename && plannedMedia.has(filename) ? "reuse" : "new";
     if (state === "new") next[source.field] = filename;
-    return { field: source.field, filename, state, text: source.text };
+    return { field: source.field, filename, state, text: source.text, provider: source.provider, accent: source.accent };
   });
 
   // Media this rewrite replaces or drops — deleted only when no other note in the model still uses it.
@@ -257,15 +265,19 @@ await writeFile(backupPath, JSON.stringify({
   }))
 }, null, 2));
 
-const apiKey = await getMiniMaxApiKey({ envName: tts.apiKeyEnv, keychainService: tts.keychainService, envFile: tts.envFile });
+let apiKeyPromise;
+const minimaxKey = () => (apiKeyPromise ??= getMiniMaxApiKey({ envName: tts.apiKeyEnv, keychainService: tts.keychainService, envFile: tts.envFile }));
 const results = [];
 for (const plan of plans) {
   for (const item of plan.audio) {
     if (item.state !== "new") continue;
-    const audio = await synthesizeMiniMax({
-      apiKey, endpoint: tts.endpoint, text: item.text, model: tts.model, voiceId: tts.voiceId,
-      speed: tts.speed, minIntervalMs: tts.minIntervalMs
-    });
+    const audio = item.provider === "youdao"
+      // 免费词典录音：拉不到就抛错停下，绝不静默改用付费合成。
+      ? await synthesizeYoudao({ text: item.text, accent: item.accent })
+      : await synthesizeMiniMax({
+        apiKey: await minimaxKey(), endpoint: tts.endpoint, text: item.text, model: tts.model, voiceId: tts.voiceId,
+        speed: tts.speed, minIntervalMs: tts.minIntervalMs
+      });
     // synthesizeMiniMax returns { audioBase64, usageCharacters } — a tiny payload means the API
     // answered without audio and must never be written as the card's clip.
     assert(typeof audio?.audioBase64 === "string" && audio.audioBase64.length > 1000,

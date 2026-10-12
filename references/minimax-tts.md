@@ -1,3 +1,15 @@
+# 音频：单词走有道，例句走 MiniMax
+
+**单词发音默认来自有道词典录音**（`scripts/youdao-tts.mjs`，`--word-tts youdao|youdao-us|minimax`）。
+它是免费的人类词典读音，且读的就是词条本身；但它是**词典接口而不是 TTS**：只有词典收录的词条有音频，
+实测单词与短语词条（`spite`、`comply with`、`in spite of`）返回 MP3，**任何句子都返回 500
+`returned null audio`**（13 字符的 `She trembled.` 也一样）。所以例句合成必须继续用 MiniMax，本文其余
+部分讲的都是 MiniMax 这一侧。
+
+非官方端点：没有 SLA，可能限流或改接口。取不到词音时脚本**直接抛错停下**，不会静默改用付费合成。
+provider 与口音都写进内容寻址的文件名（`youdao-uk-…` / `youdao-us-…` / `minimax-…`），所以换来源会重录，
+不会误当成"已存在"而复用旧音频。抓来的音频自用可以，**不要公开分发**。
+
 # MiniMax TTS
 
 Use only for an authorized import that needs stored Anki audio. This is an import-time operation,

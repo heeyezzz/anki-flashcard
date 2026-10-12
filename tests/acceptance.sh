@@ -279,6 +279,38 @@ check_absent "the literal \\n never leaks into the floor"  '\\nvt'            no
 FLOOR_TAG="import('$S/scripts/lexicon.mjs').then(m => { console.log(m.dictionaryCore({ raw: 'n. 特许, 让步, 认可' + String.fromCharCode(10) + '[经] 核准, 许可' }).core); })"
 check_absent "a domain-tagged group after a newline is dropped" '核准'          node -e "$FLOOR_TAG"
 
+echo "== 10b. 音频来源分流（单词走有道，例句走 MiniMax）=="
+FP=$(node -e "
+const y = await import('$S/scripts/youdao-tts.mjs');
+const m = await import('$S/scripts/minimax-tts.mjs');
+const MM = { model: 'speech-2.8-hd', voiceId: 'English_Steady_Female_1', speed: 1, mediaPrefix: 'minimax' };
+const mk = (src) => m.createMediaFilename({ word: 'spite', slot: 'word', text: 'spite', model: src.model, voiceId: src.voiceId, speed: src.speed, prefix: src.prefix });
+console.log([mk(y.wordAudioSource('youdao', MM)), mk(y.wordAudioSource('youdao-us', MM)), mk(y.wordAudioSource('minimax', MM))].join(' '));
+" --input-type=module)
+check "词音文件名带 youdao-uk 前缀"           "youdao-uk-spite-word"  printf '%s' "$FP"
+check "美音是另一个文件名（换口音会重录）"     "youdao-us-spite-word"  printf '%s' "$FP"
+[ -n "$FP" ] && [ "$(echo "$FP" | tr ' ' '\n' | sort -u | wc -l | tr -d ' ')" = "3" ] \
+  && { echo "PASS  三种词音来源的文件名互不相同（不会误复用）"; pass=$((pass+1)); } \
+  || { echo "FAIL  三种词音来源的文件名互不相同: $FP"; fail=$((fail+1)); }
+check "dry-run 把 WordAudio 标成 youdao"        '"provider": "youdao"'   node "$S/scripts/import-vocabulary.mjs" "$T/ok.json" --dry-run --minimax-voice English_Steady_Female_1
+check "例句仍归 MiniMax"                          '"provider": "minimax"'  node "$S/scripts/import-vocabulary.mjs" "$T/ok.json" --dry-run --minimax-voice English_Steady_Female_1
+check "拒绝未知的 --word-tts"                     "只能是"                 node "$S/scripts/import-vocabulary.mjs" "$T/ok.json" --dry-run --word-tts google
+
+# 有道端点契约：词条有音频、句子没有。网络不可用时跳过，不拖垮套件。
+YOUDAO_CONTRACT=$(node -e "
+import('$S/scripts/youdao-tts.mjs').then(async (y) => {
+  try {
+    const ok = await y.synthesizeYoudao({ text: 'spite' });
+    try { await y.synthesizeYoudao({ text: 'She trembled.' }); console.log('REGRESSION 句子竟然取到了音频，分流前提已变'); }
+    catch (_) { console.log('PASS 词条可取（' + ok.bytes + ' 字节）且句子取不到'); }
+  } catch (e) { console.log('SKIP 有道端点不可达：' + e.message.slice(0, 60)); }
+});")
+case "$YOUDAO_CONTRACT" in
+  SKIP*) echo "SKIP  有道端点契约（$YOUDAO_CONTRACT）";;
+  PASS*) echo "PASS  有道端点契约";;
+  *)     echo "FAIL  有道端点契约：$YOUDAO_CONTRACT"; fail=$((fail+1));;
+esac
+
 echo "== 10. 模板不变量（共用函数一致 / 无死 CSS / 音频独占）=="
 check "template invariants all hold" "模板不变量全部通过" node "$S/tests/template-invariants.mjs"
 

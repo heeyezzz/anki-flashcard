@@ -17,6 +17,7 @@
 import { readFile } from "node:fs/promises";
 import { cleanSpeechText, createMediaFilename, MINIMAX_TTS_ENDPOINT, synthesizeMiniMax } from "./minimax-tts.mjs";
 import { getMiniMaxApiKey } from "./minimax-credentials.mjs";
+import { synthesizeYoudao, wordAudioSource, WORD_TTS_CHOICES } from "./youdao-tts.mjs";
 import { loadCefrList } from "./level-check.mjs";
 import { loadLexicon, senseHint } from "./lexicon.mjs";
 import {
@@ -29,13 +30,15 @@ const DEFAULT_API_URL = "http://127.0.0.1:8766";
 const DEFAULT_MODEL_NAME = process.env.ANKI_FLASHCARD_MODEL || "微语境闪卡 1.0";
 const DEFAULT_TAG = "微语境";
 
-const usage = "Usage: node import-vocabulary.mjs /absolute/path/to/notes.json [--dry-run] [--confirmed] [--without-tts] [--strict-level] [--no-level-check] [--anki-connect-url URL] [--tts minimax --minimax-voice VOICE_ID] [--minimax-model MODEL] [--minimax-speed NUMBER] [--minimax-min-interval-ms NUMBER] [--minimax-api-key-env NAME] [--minimax-keychain-service NAME] [--minimax-env-file PATH] [--minimax-endpoint URL] [--media-prefix PREFIX]";
+const usage = "Usage: node import-vocabulary.mjs /absolute/path/to/notes.json [--dry-run] [--confirmed] [--without-tts] [--strict-level] [--no-level-check] [--anki-connect-url URL] [--tts minimax --minimax-voice VOICE_ID] [--minimax-model MODEL] [--minimax-speed NUMBER] [--minimax-min-interval-ms NUMBER] [--minimax-api-key-env NAME] [--minimax-keychain-service NAME] [--minimax-env-file PATH] [--minimax-endpoint URL] [--media-prefix PREFIX] [--word-tts youdao|youdao-us|minimax]";
 const [inputPath, ...options] = process.argv.slice(2);
 let dryRun = false;
 let confirmed = false;
 let strictLevel = false;
 let levelCheck = true;
 let configuredApiUrl = process.env.ANKI_CONNECT_URL || DEFAULT_API_URL;
+// 单词发音默认走有道词典录音；例句永远走 MiniMax（有道只认词条，给不了句子）。
+let wordTts = "youdao";
 const tts = {
   enabled: true,
   provider: "minimax",
@@ -96,6 +99,10 @@ for (let index = 0; index < options.length; index += 1) {
     tts.envFile = nextValue("--minimax-env-file");
   } else if (option === "--minimax-endpoint") {
     tts.endpoint = nextValue("--minimax-endpoint");
+  } else if (option === "--word-tts") {
+    const value = nextValue("--word-tts");
+    if (!WORD_TTS_CHOICES.includes(value)) throw new Error(`${usage}\n--word-tts 只能是 ${WORD_TTS_CHOICES.join("、")}。`);
+    wordTts = value;
   } else if (option === "--media-prefix") {
     const value = nextValue("--media-prefix");
     if (!/^[a-z0-9-]+$/.test(value)) throw new Error(`${usage}\n--media-prefix accepts lowercase letters, digits, and hyphens.`);
@@ -187,13 +194,15 @@ const canAdd = await invoke("canAddNotes", { notes: ankiNotes });
 assert(canAdd.every(Boolean), "AnkiConnect rejected one or more notes during canAddNotes.");
 
 // Planned audio: one word file plus one file per populated context.
+const wordSource = wordAudioSource(wordTts, tts);
 const audioPlan = input.notes.map((note, noteIndex) => {
   const targets = [
-    { field: "WordAudio", slot: "word", text: cleanSpeechText(note.Word) },
+    { field: "WordAudio", slot: "word", text: cleanSpeechText(note.Word), ...wordSource },
     ...Array.from({ length: contextCounts[noteIndex] }, (_, index) => ({
       field: `AudioSentence${index + 1}`,
       slot: `sentence-${index + 1}`,
-      text: cleanSpeechText(note[`Sentence${index + 1}`])
+      text: cleanSpeechText(note[`Sentence${index + 1}`]),
+      provider: "minimax", prefix: tts.mediaPrefix, model: tts.model, voiceId: tts.voiceId, speed: tts.speed
     }))
   ];
   return targets.map((target) => ({
@@ -202,10 +211,10 @@ const audioPlan = input.notes.map((note, noteIndex) => {
       word: note.Word.trim(),
       slot: target.slot,
       text: target.text,
-      model: tts.model,
-      voiceId: tts.voiceId,
-      speed: tts.speed,
-      prefix: tts.mediaPrefix
+      model: target.model,
+      voiceId: target.voiceId,
+      speed: target.speed,
+      prefix: target.prefix
     })
   }));
 });
@@ -251,7 +260,8 @@ if (dryRun) {
       voiceId: tts.voiceId,
       speed: tts.speed,
       mediaPrefix: tts.mediaPrefix,
-      audioFiles: audioPlan.map((targets) => targets.map((target) => ({ field: target.field, filename: target.filename }))),
+      wordAudio: wordTts,
+      audioFiles: audioPlan.map((targets) => targets.map((target) => ({ field: target.field, filename: target.filename, provider: target.provider }))),
       reused: cached.filter((state) => state === "reused").length,
       toGenerate: cached.filter((state) => state === "new").length
     } : null,
@@ -273,14 +283,18 @@ if (tts.enabled && tts.provider === "minimax") {
     for (const target of targets) {
       if (await invoke("retrieveMediaFile", { filename: target.filename })) {
         reused += 1;
+      } else if (target.provider === "youdao") {
+        // 免费词典录音：拉不到就报错停下，绝不静默改用付费合成。
+        const clip = await synthesizeYoudao({ text: target.text, accent: target.accent });
+        await invoke("storeMediaFile", { filename: target.filename, data: clip.audioBase64 });
       } else {
         const generated = await synthesizeMiniMax({
           apiKey,
           endpoint: tts.endpoint,
           text: target.text,
-          model: tts.model,
-          voiceId: tts.voiceId,
-          speed: tts.speed,
+          model: target.model,
+          voiceId: target.voiceId,
+          speed: target.speed,
           minIntervalMs: tts.minIntervalMs
         });
         await invoke("storeMediaFile", { filename: target.filename, data: generated.audioBase64 });
@@ -289,7 +303,7 @@ if (tts.enabled && tts.provider === "minimax") {
       ankiNotes[noteIndex].fields[target.field] = target.filename;
     }
   }
-  console.log(`MiniMax TTS：复用 ${reused} 段音频，本次新生成 ${generatedCharacters} 个字符。`);
+  console.log(`音频：复用 ${reused} 段，MiniMax 新生成 ${generatedCharacters} 个字符；单词来源 ${wordTts}。`);
 }
 
 const noteIds = await invoke("addNotes", { notes: ankiNotes });
