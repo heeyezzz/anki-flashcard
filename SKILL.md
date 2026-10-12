@@ -95,10 +95,13 @@ line breaks into the field; and `Meaning{i}` is only reachable through the `【�
 ## Before writing
 
 1. **Session check (mandatory, first thing):** `node "$SKILL_DIR/scripts/anki-session.mjs" --start`. It
-   probes the endpoint: online → syncs AnkiWeb before anything is written; offline → launches Anki
-   (`open -a Anki`, override the app name with `ANKI_APP`), waits up to `--timeout` seconds for the
-   endpoint to answer, then syncs. Non-zero exit means the sync did not land — surface it instead of
-   importing on top of a collection you have not seen. It is macOS-only; elsewhere open Anki by hand.
+   first refreshes the personal wordbook from the gist (see step 5) and prints the result as
+   `wordbook`, then probes the endpoint: online → syncs AnkiWeb before anything is written; offline →
+   launches Anki (`open -a Anki`, override the app name with `ANKI_APP`), waits up to `--timeout`
+   seconds for the endpoint to answer, then syncs. Non-zero exit means the sync did not land — surface
+   it instead of importing on top of a collection you have not seen. A wordbook pull that fails does
+   **not** fail the session: it prints why and falls back to the local snapshot. It is macOS-only;
+   elsewhere open Anki by hand.
 2. Read [the note schema](references/note-schema.md), then [the context-design guide](references/example-design.md).
 3. Confirm the user has authorized adding these notes. A request to draft, review, or validate
    vocabulary is not authorization to write to Anki.
@@ -114,7 +117,10 @@ line breaks into the field; and `Meaning{i}` is only reachable through the `【�
    (`scripts/known-words.mjs`, read from `~/Documents/Project/查词插件/wordbook-latest.json`, override with
    `WORDBOOK_JSON`) or by `assets/allow-extra.txt`. The gate's point is "no second *unknown* word", so a
    marked-known word is exempt at any band; the dry-run prints the wordbook status (count, and a nag if
-   the export is more than 7 days old). Missing wordbook → the pure CEFR rule. It also flags two contexts whose sentences are
+   the export is more than 7 days old). `--start` already pulled the gist through
+   `查词插件/tools/pull-wordbook.mjs` (override with `WORDBOOK_PULL_CMD`), so the exemption list is the
+   learner's current one — never pull by hand before a run. Missing wordbook → the pure CEFR rule.
+   It also flags two contexts whose sentences are
    lightly edited copies of one another (`个实词相同`) — those are one retrieval condition, rewrite one
    of them the same way. And it cross-checks the card against ECDICT (`scripts/lexicon.mjs`): a
    `ChineseCore` part of speech the dictionary never assigns that word, or an `IPA` far from its
@@ -321,7 +327,7 @@ SKILL.md
 references/note-schema.md      字段契约（必填/可选/音频字段、内容约定）
 references/example-design.md   3–5 个微语境的设计标准、A2 难度规则与自查清单
 references/minimax-tts.md      语音配置、命名/复用规则、确认门
-scripts/anki-session.mjs             跑前的上线检查 + 拉起 Anki + 同步；验收后同步并退出 Anki（--start / --finish）
+scripts/anki-session.mjs             跑前：刷新个人词库 → 上线检查 → 拉起 Anki → 同步；验收后同步并退出 Anki（--start / --finish）
 scripts/import-vocabulary.mjs        新建卡片（--dry-run / --confirmed）
 scripts/rewrite-existing.mjs         改写已有卡片：内容+语音，保留排程（--deck / --dry-run / --confirmed）
 scripts/add-audio-to-existing.mjs    给已有卡片补语音（--deck / --word / --refresh / --dry-run）
@@ -341,7 +347,7 @@ assets/irregular-forms.txt            不规则变化（made/found/meant…）�
 scripts/minimax-tts.mjs              TTS 调用与确定性文件名
 scripts/minimax-credentials.mjs      key：env → Keychain → .env
 scripts/youdao-tts.mjs               单词发音：有道词典录音（免费、只认词条；句子取不到）
-scripts/known-words.mjs              读 TapDict 个人词库 wordbook-latest.json：认识的词豁免 A2 门
+scripts/known-words.mjs              TapDict 个人词库：认识的词豁免 A2 门；--start 时从 gist 刷新快照
 tests/acceptance.sh                  验收套件（自带 PASS/FAIL 计数；只写 测试::anki-flashcard验收 夹具牌组）
 tests/template-invariants.mjs        模板不变量：正背面共用函数逐字节一致 / 无死 CSS / 同一时刻只有一个声音
 templates/微语境闪卡-1.0/             当前 Front/Back/CSS 副本 + 现在的卡面形态说明；template-push.mjs 以此为准推送

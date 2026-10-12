@@ -286,6 +286,28 @@ GATE2="import('$S/scripts/level-check.mjs').then(async (m) => { const c = await 
 check "词库外的难词仍然报警" "flagged=meticulous+audit" node -e "$GATE2"
 check "dry-run 报出词库状态"        '"wordbook"'           node "$S/scripts/import-vocabulary.mjs" "$T/ok.json" --dry-run --without-tts
 
+# 会话开始时把词库刷成 gist 上的最新版；拉不到也不能把整轮制卡卡住。
+REFRESH="
+const { refreshKnownWords } = await import('$S/scripts/known-words.mjs');
+const { writeFile } = await import('node:fs/promises');
+const d = '$T/refresh';
+await import('node:fs/promises').then((fs) => fs.mkdir(d, { recursive: true }));
+await writeFile(d + '/ok.mjs', 'console.log(1)');
+await writeFile(d + '/bad.mjs', 'console.error(String.fromCharCode(98,111,111,109))' + String.fromCharCode(10) + 'process.exit(2)');
+const a = await refreshKnownWords({ pullScript: d + '/nope.mjs' });
+const b = await refreshKnownWords({ pullScript: d + '/ok.mjs' });
+const c = await refreshKnownWords({ pullScript: d + '/bad.mjs' });
+console.log(JSON.stringify([a, b, c]));
+"
+check "没有 pull 脚本时沿用本地快照，不报错" "沿用本地词库快照" node --input-type=module -e "$REFRESH"
+check "拉取成功时报告已刷新" "\"ok\":true" node --input-type=module -e "$REFRESH"
+check "拉取失败时带上原因并继续" "词库拉取失败" node --input-type=module -e "$REFRESH"
+check "会话开始会刷新词库" "refreshKnownWords" cat "$S/scripts/anki-session.mjs"
+START_JSON="$(node "$S/scripts/anki-session.mjs" --start 2>&1)"
+if grep -qF '"wordbook"' <<<"$START_JSON" && grep -qE '词库已从 gist 刷新|沿用本地|词库拉取失败' <<<"$START_JSON"; then
+  echo "PASS  --start 输出带词库刷新结果"; pass=$((pass+1))
+else echo "FAIL  --start 输出带词库刷新结果"; echo "      got: $(head -c 400 <<<"$START_JSON")"; fail=$((fail+1)); fi
+
 echo "== 10b. 音频来源分流（单词走有道，例句走 MiniMax）=="
 FP=$(node -e "
 const y = await import('$S/scripts/youdao-tts.mjs');

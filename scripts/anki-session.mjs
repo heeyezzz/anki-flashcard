@@ -2,8 +2,9 @@
 /**
  * anki-flashcard — the Anki app around a card run: bring it up, sync, and close it again.
  *
- *   --start    before anything touches Anki: launch Anki when the endpoint is dead, then sync so the
- *              run starts from the latest collection.
+ *   --start    before anything touches Anki: refresh the personal wordbook from the gist (the A2 gate
+ *              judges against it), launch Anki when the endpoint is dead, then sync so the run
+ *              starts from the latest collection.
  *   --finish   only after the write AND verify-import.mjs passed: sync again, then quit Anki.
  *
  * --finish refuses to quit on a failed sync: a sync that needs fixing is fixed with Anki still open,
@@ -11,6 +12,7 @@
  */
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { refreshKnownWords } from "./known-words.mjs";
 
 const run = promisify(execFile);
 const DEFAULT_API_URL = "http://127.0.0.1:8766";
@@ -196,13 +198,15 @@ const quitAnki = async () => {
 const report = (payload) => console.log(JSON.stringify(payload, null, 2));
 
 if (mode === "start") {
+  // 词库先刷：A2 门要按"你现在认识哪些词"判定，用旧快照就会误报。失败不阻断本次会话。
+  const wordbook = await refreshKnownWords();
   const alreadyOnline = await isOnline();
   if (!alreadyOnline) {
     await launchAnki();
     assert(await waitUntilOnline(onlineTimeout), `${APP_NAME} 已启动，但 ${onlineTimeout}s 内 ${apiUrl} 没有响应。请确认 Anki 里启用了 Agent Connect（或 AnkiConnect），必要时加大 --timeout。`);
   }
   const session = await sync();
-  report({ mode: "start", ankiConnectUrl: apiUrl, online: true, launchedByUs: !alreadyOnline, sync: session });
+  report({ mode: "start", ankiConnectUrl: apiUrl, online: true, launchedByUs: !alreadyOnline, sync: session, wordbook });
   process.exit(0);
 }
 
