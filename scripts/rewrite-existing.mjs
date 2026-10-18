@@ -32,7 +32,7 @@ import { knownWordsNotice } from "./known-words.mjs";
 import { loadCefrList } from "./level-check.mjs";
 import { loadLexicon } from "./lexicon.mjs";
 import {
-  AUDIO_FIELDS, BASE_REQUIRED_FIELDS, CONTEXT_FIELDS, OPTIONAL_TEXT_FIELDS, THEME_FIELD,
+  AUDIO_FIELDS, BASE_REQUIRED_FIELDS, CONTEXT_FIELDS, OPTIONAL_TEXT_FIELDS, SENSE_FIELD, THEME_FIELD,
   assert, isFilledString, normalizeTheme, normalizeWord, validateNote
 } from "./note-rules.mjs";
 
@@ -214,14 +214,21 @@ const plans = input.notes.map((note, noteIndex) => {
     (other) => other.noteId !== target.noteId && Object.values(other.fields).some((field) => mediaName(field.value) === name)
   ));
 
-  return { word, noteId: target.noteId, contextCount, changes, audio, mediaToDelete, current, next };
+  // Sense{i} 只用来过义项闸门，不进 next：next 才是真正写回 Anki 的字段。
+  const declarations = {};
+  for (let index = 1; index <= 5; index += 1) {
+    const value = note[SENSE_FIELD(index)];
+    if (typeof value === "number" || isFilledString(value)) declarations[SENSE_FIELD(index)] = value;
+  }
+
+  return { word, noteId: target.noteId, contextCount, changes, audio, mediaToDelete, current, next, declarations };
 });
 
 // 校验**合并后**的笔记，不是输入本身：只改 ChineseCore 时输入里没有 IPA、例句这些必填字段，
 // 拿输入去跑完整校验会误报"字段缺失"，逼调用方把 17 个字段全量重传一遍。
 plans.forEach((plan, noteIndex) => {
   // 写回后的真实状态 = 现值打底 + 本次改动（输入里没给的字段沿用现值，不是空）
-  const merged = { ...plan.current, ...plan.next };
+  const merged = { ...plan.current, ...plan.next, ...plan.declarations };
   const counted = validateNote(merged, noteIndex, {
     warnings, levelFailures, levelCheck, strictLevel, cefr, seenWords: noteWords, lexicon,
   });

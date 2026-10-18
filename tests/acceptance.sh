@@ -246,6 +246,16 @@ print(f"rewrite target: Sentence2 -> {note['Sentence2']!r}")
 PY
 check "rewrite writes, regenerates audio, self-verifies" '"failed": 0' node "$S/scripts/rewrite-existing.mjs" "$T/rewrite_real.json" --deck "$FIXTURE_DECK" --confirmed --minimax-voice "English_Steady_Female_1"
 
+# Sense{i} 不落进笔记，但必须穿过 rewrite 的"现值打底 + 本次改动"合并层到达闸门：端到端验一次。
+node --input-type=module -e "
+const { writeFile } = await import('node:fs/promises');
+await writeFile('$T/rewrite_sense.json', JSON.stringify({
+  modelName: '微语境闪卡 1.0',
+  notes: [{ Word: 'incur', ChineseCore: 'v. 招致，蒙受（损失、费用）；（规定）违反', Sense1: 1, Sense2: 1, Sense3: 1 }]
+}, null, 2));
+"
+check "rewrite 也吃 Sense{i}：全挤一个义项就拒" "全部声明为义项1" node "$S/scripts/rewrite-existing.mjs" "$T/rewrite_sense.json" --deck "$FIXTURE_DECK" --dry-run --without-tts
+
 echo "== 7. independent verification (read-only) =="
 check "verify-import: fixture card passes"    '"failed": 0'            node "$S/scripts/verify-import.mjs" --deck "$FIXTURE_DECK"
 check "verify-import: single-word mode"       '"word": "incur"'         node "$S/scripts/verify-import.mjs" --deck "$FIXTURE_DECK" --word "incur"
