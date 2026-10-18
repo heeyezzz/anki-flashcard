@@ -340,6 +340,76 @@ case "$YOUDAO_CONTRACT" in
   *)     echo "FAIL  有道端点契约：$YOUDAO_CONTRACT"; fail=$((fail+1));;
 esac
 
+echo "== 10c. 义项覆盖（三条语境不能都练同一个意思）=="
+python3 - "$T" <<'PY'
+import json, sys, pathlib
+T = pathlib.Path(sys.argv[1])
+skinny = {
+  "Word": "skinny", "IPA": "/ˈskɪni/", "Theme": "bauhaus",
+  "ChineseCore": "adj. 极瘦的，瘦得皮包骨的；（衣服）紧身的；少的，微薄的",
+  "Sentence1": "Her brother was skinny as a boy, although he ate all day.",
+  "Meaning1": "（人）极瘦的", "SentenceCN1": "她哥哥小时候【瘦得皮包骨】，虽然他整天都在吃。",
+  "Analysis1": "be skinny as a boy：形容人瘦。",
+  "Sentence2": "The horse came back skinny from the long cold winter.",
+  "Meaning2": "（动物）瘦骨嶙峋的", "SentenceCN2": "那匹马熬过漫长寒冷的冬天回来时【瘦得厉害】。",
+  "Analysis2": "come back skinny：动物过冬后掉膘。",
+  "Sentence3": "You are too skinny now: are you eating enough food?",
+  "Meaning3": "太瘦了（带着担心说）", "SentenceCN3": "你现在【太瘦了】：饭吃够了吗？",
+  "Analysis3": "too skinny：带关心语气的说法。"
+}
+def with_senses(senses):
+    note = json.loads(json.dumps(skinny))
+    for i, s in enumerate(senses, 1):
+        note[f"Sense{i}"] = s
+    return note
+(T/"sense_all_one.json").write_text(json.dumps(with_senses([1, 1, 1]), ensure_ascii=False))
+(T/"sense_cross.json").write_text(json.dumps(with_senses([1, 2, 1]), ensure_ascii=False))
+(T/"sense_missing.json").write_text(json.dumps(skinny, ensure_ascii=False))
+(T/"sense_ambiguous.json").write_text(json.dumps({
+  "Word": "concerned", "IPA": "/kənˈsɜːnd/", "Theme": "bauhaus",
+  "ChineseCore": "adj. 担心的，关切的；（与…）有关的",
+  "Sentence1": "She looked concerned, so I asked her what was wrong.",
+  "Meaning1": "（神色上）担忧的", "SentenceCN1": "她看上去【很担心】，所以我问她怎么了。",
+  "Analysis1": "look concerned：写在脸上那种担心。",
+  "Sentence2": "People in the town are concerned about the price of bread.",
+  "Meaning2": "对某事忧虑、关心", "SentenceCN2": "镇上的人【担心】面包的价格。",
+  "Analysis2": "be concerned about：为某事操心。",
+  "Sentence3": "The meeting is concerned with two simple rules.",
+  "Meaning3": "与……有关、涉及", "SentenceCN3": "这次会议只【涉及】两条简单的规定。",
+  "Analysis3": "be concerned with：关于、涉及，不表情绪。"
+}, ensure_ascii=False))
+PY
+# 直接跑 validateNote：导入器会先查"这词是否已在牌组里"，用真卡当夹具会被那道检查挡在前面。
+GATE_RUN="
+const { validateNote } = await import('$S/scripts/note-rules.mjs');
+const { readFile } = await import('node:fs/promises');
+const run = async (file) => {
+  const note = JSON.parse(await readFile('$T/' + file, 'utf8'));
+  const warnings = [];
+  try {
+    validateNote(note, 0, { warnings, levelFailures: [], seenWords: new Set(), cefr: null, levelCheck: null });
+  } catch (e) { return 'THROW│' + e.message.slice(0, 30); }
+  // 把警告归成标记，断言才不会被同一行里的其它警告带偏。
+  const flags = [];
+  if (warnings.some((w) => w.includes('没有逐条写'))) flags.push('UNDECLARED');
+  if (warnings.some((w) => w.includes('可能误判'))) flags.push('COLLAPSE_HINT');
+  if (warnings.some((w) => w.includes('声明义项'))) flags.push('MISMATCH');
+  return flags.length ? flags.join('+') : 'CLEAN';
+};
+for (const f of ['sense_all_one.json', 'sense_cross.json', 'sense_missing.json', 'sense_ambiguous.json']) {
+  console.log(f + '|' + await run(f));
+}
+"
+GATE_OUT=$(node --input-type=module -e "$GATE_RUN" 2>&1)
+check "三条语境声明同一个义项：硬失败"     "sense_all_one.json|THROW│notes[0] 的 3 条语境全部声明为义项1" printf '%s' "$GATE_OUT"
+check "声明与释义用词对不上时报出来"       "sense_cross.json|MISMATCH"                                   printf '%s' "$GATE_OUT"
+check "多义项卡没声明 Sense：提示补上"     "sense_missing.json|UNDECLARED+COLLAPSE_HINT"                 printf '%s' "$GATE_OUT"
+# concerned 的两个义项释义只共一个「关」字，靠汉字重合会误判成重复——这条守的是那个假报警。
+check "释义用词重叠时不误判成重复"         "sense_ambiguous.json|UNDECLARED"                             printf '%s' "$GATE_OUT"
+check_absent "兜底提示只在该报时报"         "sense_ambiguous.json|UNDECLARED+COLLAPSE_HINT"              printf '%s' "$GATE_OUT"
+check "搭配窗口取目标词两侧各两词"  '…brother was [skinny] as a…'  node -e "import('$S/scripts/note-rules.mjs').then(m => console.log(m.collocationWindow('Her brother was skinny as a boy, although he ate all day.', 'skinny')))"
+check "dry-run 预览带搭配与义项"  '"collocation"'  node "$S/scripts/import-vocabulary.mjs" "$T/ok.json" --dry-run --without-tts
+
 echo "== 10. 模板不变量（共用函数一致 / 无死 CSS / 音频独占）=="
 check "template invariants all hold" "模板不变量全部通过" node "$S/tests/template-invariants.mjs"
 

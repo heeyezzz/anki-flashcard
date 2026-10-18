@@ -23,7 +23,8 @@ import { loadCefrList } from "./level-check.mjs";
 import { loadLexicon, senseHint } from "./lexicon.mjs";
 import {
   ALL_NOTE_FIELDS, ALLOWED_THEMES, AUDIO_FIELDS, BASE_REQUIRED_FIELDS, CONTEXT_FIELDS, OPTIONAL_TEXT_FIELDS,
-  THEME_FIELD, assert, getContextCount, isFilledString, normalizeTheme, normalizeWord, validateNote
+  SENSE_FIELD, THEME_FIELD, assert, collocationWindow, getContextCount, isFilledString, matchSense,
+  normalizeTheme, normalizeWord, splitSenses, validateNote
 } from "./note-rules.mjs";
 export { contextWordPattern } from "./note-rules.mjs";
 
@@ -250,6 +251,9 @@ if (dryRun) {
         const slot = contextIndex + 1;
         return {
           sentence: note[`Sentence${slot}`].trim(),
+          // 搭配窗口 + 义项：三条并排看，换没换检索条件一眼可判。
+          collocation: collocationWindow(note[`Sentence${slot}`], note.Word),
+          sense: note[SENSE_FIELD(slot)] ?? (matchSense(note[`Meaning${slot}`], splitSenses(note.ChineseCore)).sense || null),
           meaning: note[`Meaning${slot}`].trim(),
           sentenceCN: note[`SentenceCN${slot}`].trim(),
           analysis: note[`Analysis${slot}`].trim()

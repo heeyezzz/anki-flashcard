@@ -32,6 +32,7 @@ anything is written, `--finish` syncs and quits it after a verified run.
 | `Theme` | input JSON | `bauhaus` (default) or `minimal` |
 | `OtherMeanings` `Source` | input JSON | optional; `OtherMeanings` renders in a collapsed 其他义项 block |
 | `WordAudio` `AudioSentence1..5` | **only the scripts** | raw MP3 filenames; never put them in input JSON. Word clips default to Youdao, sentence clips to MiniMax |
+| `Sense{i}` | input JSON | **never written into the note**: declares which `ChineseCore` sense (1-based) context *i* exercises; required for multi-sense words — see `references/example-design.md` 第 6 条 |
 
 Four things this note type expects that the sibling importer does not:
 
@@ -122,7 +123,10 @@ line breaks into the field; and `Meaning{i}` is only reachable through the `【�
    learner's current one — never pull by hand before a run. Missing wordbook → the pure CEFR rule.
    It also flags two contexts whose sentences are
    lightly edited copies of one another (`个实词相同`) — those are one retrieval condition, rewrite one
-   of them the same way. And it cross-checks the card against ECDICT (`scripts/lexicon.mjs`): a
+   of them the same way. That check only sees *wording*: three sentences may share no word at all and
+   still exercise one sense (`skinny`: 哥哥瘦/马瘦/你太瘦). For a `ChineseCore` with 2+ senses the note must
+   carry `Sense{i}` for every context — the importer rejects all-declarations-identical and warns when a
+   declaration contradicts that context's `Meaning`. And it cross-checks the card against ECDICT (`scripts/lexicon.mjs`): a
    `ChineseCore` part of speech the dictionary never assigns that word, or an `IPA` far from its
    phonetic, comes back as a warning — ECDICT aggregates several dictionaries, so a mismatch means
    "look again", not "the dictionary wins". The `dictionary` field in the dry-run preview carries

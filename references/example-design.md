@@ -46,7 +46,28 @@ B1/B2; a word in neither is judged by its band, and the wordbook does not soften
    written, and a pair of sentences whose content-word skeletons overlap by ≥3 words at ≥75% comes
    back as a `--dry-run` warning. Treat that warning like an A2 flag — rewrite one of the two, do not
    import past it.
-6. **Fast to review.** Prefer one natural sentence of roughly 8–15 English words, at most ~160
+6. **The sentences must not all sit on the same sense.** The skeleton check above compares *wording*;
+   it stays silent when three sentences share no word at all but exercise the same meaning. `skinny`
+   is that case: 哥哥瘦/马瘦/你太瘦 have zero content words in common, and all three are sense ①, so
+   the card drills one retrieval condition three times while sense ②（衣服）紧身的 and sense ③少的，微薄的
+   never appear on the front the back promised.
+   For any word whose `ChineseCore` splits into two or more senses (；-split, which is how the back
+   numbers them ①②③), declare which sense each context exercises by adding `Sense{i}` to the input
+   JSON — `1`-based, input-only, never written into the note. The importer then rejects a note whose
+   declarations are all the same number, and warns when a declaration contradicts the wording of that
+   context's `Meaning`. Declare them honestly: the gate checks that you varied, not that you were right.
+   Do not lean on the fallback. When `Sense{i}` is missing the importer guesses from overlapping Chinese
+   characters between `Meaning{i}` and the sense list and prints the guess as a hint marked 可能误判 —
+   it caught `skinny` and `slightly`, wrongly accused `concerned` (its two glosses share only the
+   character 关), and missed `storyteller` (its two senses are near-synonyms). That is a nudge to go
+   declare, not a verdict.
+   The judgment the machine cannot make is whether three contexts use the same *clue mechanism*. Skinny's
+   do: all three contrast 瘦 with eating (ate all day / long cold winter / eating enough food), which is
+   one retrieval condition wearing three outfits. Write each context's clue out in one phrase before
+   sending it; if the three phrases would fit each other's sentence, change the sense, not the scenery.
+   The `--dry-run` preview prints `collocation` for every context (`…came back [skinny] from the…`) so
+   you can read the three lines down the page and see it.
+7. **Fast to review.** Prefer one natural sentence of roughly 8–15 English words, at most ~160
    characters; the importer warns past that. Keep the target form inside the sentence — the template
    finds it with `mctxPattern()` and renders nothing highlighted if it cannot.
 

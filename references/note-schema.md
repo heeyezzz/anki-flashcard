@@ -85,6 +85,12 @@ autoplay tag would play the word twice.
   a phone. Still never restate the whole-word gloss or write a second translation.
   It stays mandatory regardless: it is what the duplicate-sense check compares, and the reference answer
   for any future grading. Citation form, not the sentence's inflected form — `【…】` carries that.
+- `Sense{i}` is **input-only**: it is never written into the note and never reaches Anki. For a word whose
+  `ChineseCore` splits into 2+ senses (；-split, which is how the back numbers them ①②③), it states which
+  sense that context exercises, 1-based. The importer rejects a note whose declarations are all the same
+  number and warns when a declaration contradicts that context's `Meaning` wording. Omit it and the
+  dry-run falls back to a character-overlap guess printed as a 可能误判 hint — see
+  `references/example-design.md` 第 6 条 for why that guess is not a verdict.
 - `IPA` is rendered on the front right next to the word, so keep the slashed form
   (`/ɪnˈkɜːr/`). A bare or missing pronunciation is visible card content now, not a hidden detail.
   The dry-run also folds KK/DJ apart and warns when the string is far from ECDICT's phonetic; words

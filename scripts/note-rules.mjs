@@ -16,6 +16,10 @@ export const OPTIONAL_TEXT_FIELDS = ["OtherMeanings", "Source"];
 export const CONTEXT_FIELDS = (index) => [
   `Sentence${index}`, `Meaning${index}`, `SentenceCN${index}`, `Analysis${index}`
 ];
+// Input-only: which ChineseCore sense (1-based, ；-split) this context exercises. Not a note field,
+// so it never reaches Anki — it exists so the 义项覆盖 gate checks a declaration instead of guessing
+// from gloss characters, which mis-reads near-synonym senses (concerned) and misses them (storyteller).
+export const SENSE_FIELD = (index) => `Sense${index}`;
 export const ALL_NOTE_FIELDS = [
   ...BASE_REQUIRED_FIELDS,
   THEME_FIELD,
@@ -118,6 +122,54 @@ export const skeletonWords = (sentence, word) => {
 
 const plainSentence = (sentence) => sentence.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
 
+// ---- 义项覆盖：三条语境是不是在练同一个意思 ----
+
+// ChineseCore 用 ；分义项，和背面 ①②③ 的切分完全一致，所以这里不另起一套规则。
+export const splitSenses = (core) => String(core).replace(/^[a-z]+\.\s*/i, "").split("；")
+  .map((sense) => sense.trim()).filter(Boolean);
+
+// 单字比对：虚词谁都会用，重合上不算证据。
+const CJK_STOP = new Set("的了着很太更最较一种个地在和与及被把就都还只是有上下".split(""));
+const cjkContent = (text) => new Set((String(text).match(/[\u3400-\u9fff]/g) || []).filter((char) => !CJK_STOP.has(char)));
+
+/** Meaning 归到汉字重合最多的那个义项；sense=0 表示判不了（一个都没重合，或并列第一）。 */
+export const matchSense = (meaning, senses) => {
+  const chars = cjkContent(meaning);
+  const scores = senses.map((entry) => {
+    const target = cjkContent(entry);
+    return [...chars].filter((char) => target.has(char)).length;
+  });
+  const top = Math.max(...scores);
+  // 并列第一说明这两个义项的释义文字本身就重叠，猜不出来。硬选靠前的那个会把"练了别的义项"判成重复，
+  // concerned 就是这么被误伤的：它的（与…）有关的 和 担心的 只共一个 关 字。
+  const leaders = scores.filter((score) => score === top).length;
+  return { sense: top === 0 || leaders > 1 ? 0 : scores.indexOf(top) + 1, shared: top, ambiguous: top > 0 && leaders > 1 };
+};
+
+/**
+ * 每条 Meaning 落在哪个义项上。collapsed = 全部判得清且都指向同一个义项。
+ * 这只是兜底提示（未声明 Sense{i} 时用）：归类靠汉字重合，释义用词跟词头不搭时会归错或归不出。
+ */
+export const senseCoverage = (core, meanings) => {
+  const senses = splitSenses(core);
+  if (senses.length < 2 || meanings.length < 2) return null;
+  const picks = meanings.map((meaning) => matchSense(meaning, senses));
+  const sure = picks.filter((pick) => pick.sense > 0);
+  const collapsed = sure.length === picks.length && new Set(sure.map((pick) => pick.sense)).size === 1;
+  return { senses, picks, collapsed };
+};
+
+/** 目标词前后的搭配窗口，如 `…was [skinny] as a…`：三条排开看，线索换了没换一眼就能判。 */
+export const collocationWindow = (sentence, word, radius = 2) => {
+  const pattern = contextWordPattern(word);
+  // 必须用 exec：contextWordPattern 带 g，String.match 走全局模式时返回的数组没有 index。
+  const found = pattern ? pattern.exec(String(sentence)) : null;
+  if (!found) return null;
+  const before = String(sentence).slice(0, found.index).trim().split(/\s+/).slice(-radius);
+  const after = String(sentence).slice(found.index + found[0].length).trim().split(/\s+/).slice(0, radius);
+  return `${before.length ? `…${before.join(" ")} ` : ""}[${found[0]}]${after.length ? ` ${after.join(" ")}…` : ""}`;
+};
+
 export const getContextCount = (note, noteIndex) => {
   let count = 0;
   let foundGap = false;
@@ -202,7 +254,8 @@ export const validateNote = (note, noteIndex, ctx) => {
       index,
       sentence: plainSentence(sentence),
       meaning: note[`Meaning${index}`].trim().replace(/\s+/g, ""),
-      skeleton: skeletonWords(sentence, word)
+      skeleton: skeletonWords(sentence, word),
+      declared: note[SENSE_FIELD(index)]
     });
   }
   for (let a = 0; a < contexts.length; a += 1) {
@@ -217,6 +270,35 @@ export const validateNote = (note, noteIndex, ctx) => {
       const containment = thinner ? shared.length / thinner : 0;
       if (shared.length >= MIN_SHARED_CONTENT_WORDS && containment >= SKELETON_SIMILAR_WARN) {
         warnings.push(`${pair} 的句子骨架 ${shared.length}/${thinner} 个实词相同（${shared.join(" ")}）：更像同一情境的改写而不是新的检索条件，建议换领域、换搭配或换句法功能。`);
+      }
+    }
+  }
+  // 上面那条查的是字面重复，查不出"换了三个场景、练的还是同一个意思"——skinny 三句零个共同实词，
+  // 但三条都在义项①上，等于一条检索条件写了三遍。
+  const senses = splitSenses(note.ChineseCore);
+  const declared = contexts.map((context) => context.declared);
+  if (senses.length >= 2 && contexts.length >= 2) {
+    if (declared.every((value) => value !== undefined && value !== null && String(value).trim() !== "")) {
+      const picked = declared.map((value, index) => {
+        const number = Number(String(value).trim());
+        assert(Number.isInteger(number) && number >= 1 && number <= senses.length,
+          `notes[${noteIndex}].${SENSE_FIELD(index + 1)} 必须是 1–${senses.length} 的整数（ChineseCore 用 ；分了 ${senses.length} 个义项）。`);
+        return number;
+      });
+      assert(new Set(picked).size > 1,
+        `notes[${noteIndex}] 的 ${picked.length} 条语境全部声明为义项${picked[0]}「${senses[picked[0] - 1]}」：字面不重复，练的是同一个检索条件，背面其余 ${senses.length - 1} 个义项一次没出现。把其中一到两条改到别的义项（见 references/example-design.md 第 6 条）。`);
+      // 声明可以随口写，所以拿释义文字反向核一遍：对不上就报（只报，不拦——汉字重合本来就猜不准）。
+      contexts.forEach((context, index) => {
+        const guess = matchSense(context.meaning, senses);
+        if (guess.sense && guess.sense !== picked[index]) {
+          warnings.push(`notes[${noteIndex}].${SENSE_FIELD(index + 1)} 声明义项${picked[index]}「${senses[picked[index] - 1]}」，但 Meaning「${context.meaning}」的用词更像义项${guess.sense}「${senses[guess.sense - 1]}」：两者核一下，别把义项编号写串。`);
+        }
+      });
+    } else {
+      warnings.push(`notes[${noteIndex}] 有 ${senses.length} 个义项但没有逐条写 ${SENSE_FIELD(1)}…：无法核对语境是否都挤在同一个意思上。`);
+      const coverage = senseCoverage(note.ChineseCore, contexts.map((context) => context.meaning));
+      if (coverage?.collapsed) {
+        warnings.push(`notes[${noteIndex}]（按释义汉字猜，可能误判）${contexts.length} 条语境都像落在义项${coverage.picks[0].sense}「${coverage.senses[coverage.picks[0].sense - 1]}」：字面不重复但检索条件只有一个。`);
       }
     }
   }
