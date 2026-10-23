@@ -21,8 +21,8 @@ const run = promisify(execFile);
 
 export const YOUDAO_ENDPOINT = "https://dict.youdao.com/dictvoice";
 export const YOUDAO_ACCENTS = { uk: 2, us: 1 };
-// -l16 是这份录音的处理版本：文件名指纹含 model，改这个后缀会让旧的原样音频被判为过期并重录。
-export const YOUDAO_MODEL = "youdao-dictvoice-l16";
+// 后缀是处理版本（l16b = 两段式：loudnorm + 残余增益/限幅）：指纹含 model，改后缀会让旧录音被判过期重录。
+export const YOUDAO_MODEL = "youdao-dictvoice-l16b";
 // 目标水位取自 MiniMax 例句的实测值（-15.8 ~ -17.7 LUFS，均值 -16.9）。
 export const YOUDAO_TARGET_LUFS = -16;
 export const YOUDAO_TARGET_TRUE_PEAK = -1.5;
@@ -36,22 +36,44 @@ const hasFfmpeg = async () => {
   return ffmpegChecked;
 };
 
+/** 读一份 mp3 的综合响度；读不出来返回 null（这时不做残余补偿，宁可少补也不要瞎补）。 */
+const integratedLufs = async (path, runner) => {
+  try {
+    const { stderr } = await runner("ffmpeg", ["-hide_banner", "-i", path, "-af", "loudnorm=print_format=json", "-f", "null", "-"]);
+    const value = Number((stderr.match(/"input_i"\s*:\s*"(-?[\d.]+)"/) || [])[1]);
+    return Number.isFinite(value) ? value : null;
+  } catch (_) {
+    return null;
+  }
+};
+
 /**
- * EBU R128 响度归一（单遍）：短词条一次过就能压到目标 ±0.5 LU 内，不值得上两遍。
+ * EBU R128 响度归一（两段式）：loudnorm 先把整体拉到 -16 LUFS；个别词条峰值相对主体太高
+ * （divine、packing list 这种一个尖峰顶住的），loudnorm 会被真峰值封顶、只到 -19~-20。
+ * 这时补一段残余增益 + 限幅，把剩下的几 dB 补回来，峰值仍压在 -1.5 dBTP 以内。
  * 走临时文件而不是 pipe:0/pipe:1 —— 在本机上那条管道调用会卡死（连 execFile 的 timeout 都收不回）。
  * 没有 ffmpeg 时原样返回并把 normalized 标成 false——响一点不响，不该因此把整轮导入卡住。
  */
-export const normalizeLoudness = async (buffer, { af = YOUDAO_LOUDNORM } = {}) => {
+export const normalizeLoudness = async (buffer, { af = YOUDAO_LOUDNORM, tolerance = 1.5 } = {}) => {
   if (!(await hasFfmpeg())) return { buffer, normalized: false, reason: "本机没有 ffmpeg" };
   const dir = await mkdtemp(join(tmpdir(), "anki-loudnorm-"));
-  const [src, dst] = [join(dir, "in.mp3"), join(dir, "out.mp3")];
+  const [src, first, final] = ["in.mp3", "pass1.mp3", "out.mp3"].map((name) => join(dir, name));
   try {
     await writeFile(src, buffer);
     await run("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-i", src, "-af", af,
-      "-c:a", "libmp3lame", "-b:a", "128k", dst], { timeout: 30_000 });
-    const shaped = await readFile(dst);
-    if (shaped.length < 1000) throw new Error(`输出过小（${shaped.length} 字节）`);
-    return { buffer: shaped, normalized: true };
+      "-c:a", "libmp3lame", "-b:a", "128k", first], { timeout: 30_000 });
+    let shaped = first;
+    const level = await integratedLufs(first, run);
+    if (level !== null && level < YOUDAO_TARGET_LUFS - tolerance) {
+      const gain = (YOUDAO_TARGET_LUFS - level).toFixed(1);
+      await run("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-i", first,
+        "-af", `volume=${gain}dB,alimiter=limit=0.89:level=disabled`,
+        "-c:a", "libmp3lame", "-b:a", "128k", final], { timeout: 30_000 });
+      shaped = final;
+    }
+    const out = await readFile(shaped);
+    if (out.length < 1000) throw new Error(`输出过小（${out.length} 字节）`);
+    return { buffer: out, normalized: true, lufs: await integratedLufs(shaped, run) };
   } catch (error) {
     return { buffer, normalized: false, reason: `响度归一失败：${String(error.stderr || error.message).trim().slice(0, 80)}` };
   } finally {
