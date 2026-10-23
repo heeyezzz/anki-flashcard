@@ -27,7 +27,7 @@ import { join } from "node:path";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { cleanSpeechText, createMediaFilename, MINIMAX_TTS_ENDPOINT, synthesizeMiniMax } from "./minimax-tts.mjs";
 import { getMiniMaxApiKey } from "./minimax-credentials.mjs";
-import { synthesizeYoudao, wordAudioSource, WORD_TTS_CHOICES } from "./youdao-tts.mjs";
+import { noteYoudaoNormalization, synthesizeYoudao, wordAudioSource, WORD_TTS_CHOICES } from "./youdao-tts.mjs";
 import { knownWordsNotice } from "./known-words.mjs";
 import { loadCefrList } from "./level-check.mjs";
 import { loadLexicon } from "./lexicon.mjs";
@@ -291,6 +291,7 @@ for (const plan of plans) {
         apiKey: await minimaxKey(), endpoint: tts.endpoint, text: item.text, model: tts.model, voiceId: tts.voiceId,
         speed: tts.speed, minIntervalMs: tts.minIntervalMs
       });
+    if (item.provider === "youdao") noteYoudaoNormalization(audio, warnings);
     // synthesizeMiniMax returns { audioBase64, usageCharacters } — a tiny payload means the API
     // answered without audio and must never be written as the card's clip.
     assert(typeof audio?.audioBase64 === "string" && audio.audioBase64.length > 1000,

@@ -153,6 +153,16 @@ existing model and deck and never creates or edits either. It validates 3–5 co
 groups, rejects markup and sentences the template cannot highlight, rejects words already present in
 the model, calls `canAddNotes`, adds notes, and reads every field back.
 
+这台机器走 Agent Connect（AnkiConnect Plus），端点固定 8766，不要退回 8765。它在原接口之上多了
+`queryRevlog`、`renderCard`、`createBackup`、`syncNow`、`plusInfo` 这类动作。没有对应的 MCP server：
+临时查一条数据就直接 `curl -s http://127.0.0.1:8766 -d '{"action":"...","version":6,"params":{...}}'`。
+
+返回值形状不统一：`modelTemplates`、`modelStyling` 把内容裸放在顶层，`modelStyling` 再嵌一层 `css`，
+而 `modelName` 是这几个动作的**顶层**参数键。按 `{"result": ...}` 去解会读不到。
+
+**报价前先跑 `--dry-run`，读 `tts.toGenerate`（要新合成的条数）和 `tts.reused`**，不要按词数心算：
+一句一个 MiniMax 付费请求，单词发音走有道免费录音。
+
 ## Audio: word from Youdao, sentences from MiniMax
 
 **Word pronunciation defaults to the Youdao dictionary recording** (`--word-tts youdao|youdao-us|minimax`).
@@ -163,7 +173,12 @@ while **any sentence returns HTTP 500 `returned null audio`**, even `"She trembl
 therefore always stays on MiniMax. The endpoint is unofficial: no SLA, may rate-limit or change. A
 failed fetch aborts the run — it never silently falls back to the paid synthesiser. `tests/acceptance.sh`
 asserts that contract, plus that the provider and accent are baked into the content-addressed filename
-(so switching sources re-records instead of reusing the old clip). Do not redistribute the fetched audio.
+(so switching sources re-records instead of reusing the old clip). Every clip is loudness-normalised to
+−16 LUFS before it is stored — dictionary recordings measured 4.7 dB quieter than the MiniMax example
+clips on the same card, which the learner hears as "the word is too quiet". The processing version lives
+in `YOUDAO_MODEL`, i.e. in the filename fingerprint, so old un-normalised clips are re-recorded rather
+than reused; with no ffmpeg the clip is stored raw and the dry-run says so. Do not redistribute the
+fetched audio.
 
 Sentence synthesis is unchanged: `speech-2.8-hd`, `English_Steady_Female_1`, speed `1`, one paid request
 per populated sentence (three to five per uncached note, plus one more if `--word-tts minimax`).
@@ -292,6 +307,22 @@ node "$SKILL_DIR/scripts/rewrite-existing.mjs" /absolute/path/rewrite.json --dec
 - A run that verifies clean ends the same way as an import: `anki-session.mjs --start` opened it, so
   `anki-session.mjs --finish` syncs and closes Anki afterwards.
 
+## 别的工具只想读词表时
+
+`english-context` 的 `scripts/sync-anki-words.mjs` 就是范本：`findNotes` + `notesInfo` 取 `Word` 字段，
+写成 `anki-words.json` 快照。只读消费方要遵守三条：端点没开就退回上一份快照、**不挡生成**；
+**不写卡**；**不调用 `syncNow`**。付费合成和写卡只属于本 skill 的 `--confirmed` 路径。
+
+## 读进度：Anki 的「毕业」和台账的「毕业」是两回事
+
+- 台账那边 `ledger.mjs graduate` 指**曝光够 5 次**，词从阅读清单毕业，和排程无关。
+- Anki 这边判断一张卡是不是真记住了，看 **`cardsInfo` 的 `interval >= 14` 天、`lapses == 0`、`queue == 2`（复习态）**。
+  别拿易度当标准：这个牌组里 19 张复习卡有 17 张还是默认的 2.50，没有区分度；`cardsInfo` 里字段名是
+  `factor`，2500 就是 2.5。新卡（`queue == 0`）永远不算毕业，间隔是唯一硬证据。
+
+牌组现状（2026-10 记录，读之前先 `deckNames` 核一遍）：`all in one`、`all in one::微语境闪卡`、
+`all in one::系统默认`、`测试`、`测试::AI多场景完型测试`。制卡写的是 `all in one::微语境闪卡`。
+
 ## 改卡面模板（渲染层）
 
 卡面形态与完整命令序列在 `templates/微语境闪卡-1.0/README.md`，顺序是
@@ -301,6 +332,17 @@ node "$SKILL_DIR/scripts/rewrite-existing.mjs" /absolute/path/rewrite.json --dec
 标记，会让译文下划线整条静默失去验证——已经为此白验证过一轮）；布局结论最终要在 **AnkiDroid 手机
 截图**上确认，桌面渲染只是代理。`--push` 会先要求集合内容仍等于 git HEAD，防止覆盖别人在 Anki 里
 直接改过的模板。
+
+模板里**不要放 `<input>`**：Anki 的 reviewer 有窗口级快捷键 `(" ", onEnterKey)`，空格会被抢去翻面，
+含空格的答案永远打不出来。微语境闪卡因此是纯自评，用原生空格翻面。`tests/template-invariants.mjs`
+有一条检查盯着这件事。
+
+没有 Anki 在手、只想看卡面长什么样时，`render-card.mjs` 之外也可以直接用本机 Chrome 截静态 HTML：
+
+```sh
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new \
+  --screenshot=/tmp/out.png --window-size=900,760 --virtual-time-budget=4000 file:///tmp/card.html
+```
 
 ## Tests
 
@@ -350,10 +392,11 @@ assets/allow-extra.txt                自备白名单：你已掌握的专业词
 assets/irregular-forms.txt            不规则变化（made/found/meant…）不算超纲；现由构建脚本生成
 scripts/minimax-tts.mjs              TTS 调用与确定性文件名
 scripts/minimax-credentials.mjs      key：env → Keychain → .env
-scripts/youdao-tts.mjs               单词发音：有道词典录音（免费、只认词条；句子取不到）
+scripts/youdao-tts.mjs               单词发音：有道词典录音（免费、只认词条；句子取不到）+ 入库前响度归一到例句水位（ffmpeg）
 scripts/known-words.mjs              TapDict 个人词库：认识的词豁免 A2 门；--start 时从 gist 刷新快照
 tests/acceptance.sh                  验收套件（自带 PASS/FAIL 计数；只写 测试::anki-flashcard验收 夹具牌组）
 tests/template-invariants.mjs        模板不变量：正背面共用函数逐字节一致 / 无死 CSS / 同一时刻只有一个声音
+tests/loudness-check.mjs             词音响度回归：把安静输入归一到 -16 LUFS ±1.5（无 ffmpeg 时 SKIP）
 templates/微语境闪卡-1.0/             当前 Front/Back/CSS 副本 + 现在的卡面形态说明；template-push.mjs 以此为准推送
 CHANGELOG.md                          模板/渲染层的轮次史（第 N 轮）；字段与内容规则的变更记在 SKILL.md
 agents/openai.yaml, .env.example, .gitignore

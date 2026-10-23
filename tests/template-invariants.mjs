@@ -2,7 +2,7 @@
 /**
  * anki-flashcard — template invariants that need no Anki and no network.
  *
- * Three checks, all of them things this deck has actually gotten wrong:
+ * Four checks, all of them things this deck has actually gotten wrong:
  *   1. shared helpers (mctxPattern / bindPlaying / text) must stay byte-identical between
  *      Front.html and Back.html — Anki gives templates no import mechanism, so they are copied,
  *      and a copy silently drifts;
@@ -58,6 +58,14 @@ check("模板词性缩写表与 lexicon.CARD_POS 一致",
   Boolean(templatePos) && missing.length === 0 && extra.length === 0,
   templatePos ? `共 ${CARD_POS.length} 项${missing.length ? `；模板缺 ${missing.join("、")}` : ""}${extra.length ? `；模板多出 ${extra.join("、")}` : ""}`
     : `没能从 Back.html 里解析出 POS_HEAD：${posLiteral.slice(0, 60)}`);
+
+/** 微语境闪卡是纯自评：卡片里出现输入框就永远打不出带空格的答案。
+ *  Anki 的 reviewer 有窗口级快捷键 (" ", onEnterKey)，空格会被抢去翻面。 */
+const inputs = [["Front.html", front], ["Back.html", back]]
+  .filter(([, html]) => /<input\b/i.test(html))
+  .map(([name]) => name);
+check("模板里没有 <input> 输入框", inputs.length === 0,
+  inputs.length ? `${inputs.join("、")}：Anki 会抢走空格键，含空格的输入永远打不出来` : "");
 
 const ANKI_INJECTED = new Set(["nightMode", "card", "cardTemplate", "mid", "tid", "day", "night"]);
 const used = new Set([...front.matchAll(/[\w-]+/g)].map((m) => m[0]));

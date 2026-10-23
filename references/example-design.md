@@ -35,6 +35,9 @@ B1/B2; a word in neither is judged by its band, and the wordbook does not soften
    with its CEFR band, so read the `--dry-run` warnings and rewrite before importing. Terms the
    learner already commands can be exempted in `assets/allow-extra.txt`; an empty file is the strict
    rule. `--strict-level` turns any remaining flag into an error that blocks the import.
+   **The gate also trips on story names** — `Mei`, `Anna`, `Marta` are not in the CEFR list, so a
+   sentence written around a made-up character comes back flagged. Do not add them to the whitelist:
+   rewrite to `she` / `my aunt` / `the buyer`, which is cheaper and keeps the list meaningful.
 4. **Useful variation in use.** Across the selected contexts, vary what is real and common: a
    high-frequency sense, a collocation, a grammatical form (passive, participle, plural), or a
    sentence function (request, condition, obligation). Do not reach for rare or specialist senses just
@@ -70,6 +73,13 @@ B1/B2; a word in neither is judged by its band, and the wordbook does not soften
 7. **Fast to review.** Prefer one natural sentence of roughly 8–15 English words, at most ~160
    characters; the importer warns past that. Keep the target form inside the sentence — the template
    finds it with `mctxPattern()` and renders nothing highlighted if it cannot.
+
+## Senses you deliberately leave off the card
+
+A dictionary gloss whose sense would drag the sentence somewhere else does not have to reach the front.
+Drop it, but name it at content confirmation and say why it was cut — the learner should never find a
+sense missing later and wonder whether it was an oversight. A rare *verb* sense goes into
+`OtherMeanings` (the collapsed block) instead of taking a context slot; `ChineseCore` stays the gloss stack.
 
 ## Selection order
 

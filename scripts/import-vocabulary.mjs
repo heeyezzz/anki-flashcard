@@ -17,7 +17,7 @@
 import { readFile } from "node:fs/promises";
 import { cleanSpeechText, createMediaFilename, MINIMAX_TTS_ENDPOINT, synthesizeMiniMax } from "./minimax-tts.mjs";
 import { getMiniMaxApiKey } from "./minimax-credentials.mjs";
-import { synthesizeYoudao, wordAudioSource, WORD_TTS_CHOICES } from "./youdao-tts.mjs";
+import { noteYoudaoNormalization, synthesizeYoudao, wordAudioSource, WORD_TTS_CHOICES } from "./youdao-tts.mjs";
 import { knownWordsNotice } from "./known-words.mjs";
 import { loadCefrList } from "./level-check.mjs";
 import { loadLexicon, senseHint } from "./lexicon.mjs";
@@ -293,6 +293,7 @@ if (tts.enabled && tts.provider === "minimax") {
         // 免费词典录音：拉不到就报错停下，绝不静默改用付费合成。
         const clip = await synthesizeYoudao({ text: target.text, accent: target.accent });
         await invoke("storeMediaFile", { filename: target.filename, data: clip.audioBase64 });
+        noteYoudaoNormalization(clip, warnings);
       } else {
         const generated = await synthesizeMiniMax({
           apiKey,

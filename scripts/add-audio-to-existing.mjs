@@ -6,7 +6,7 @@
  */
 import { cleanSpeechText, createMediaFilename, MINIMAX_TTS_ENDPOINT, synthesizeMiniMax } from "./minimax-tts.mjs";
 import { getMiniMaxApiKey } from "./minimax-credentials.mjs";
-import { synthesizeYoudao, wordAudioSource, WORD_TTS_CHOICES } from "./youdao-tts.mjs";
+import { noteYoudaoNormalization, synthesizeYoudao, wordAudioSource, WORD_TTS_CHOICES } from "./youdao-tts.mjs";
 
 const API_URL = process.env.ANKI_CONNECT_URL || "http://127.0.0.1:8766";
 const MODEL_NAME = process.env.ANKI_FLASHCARD_MODEL || "微语境闪卡 1.0";
@@ -142,6 +142,7 @@ for (const entry of todo) {
           return synthesizeMiniMax({ apiKey, endpoint: config.endpoint, text: target.text, model: target.model, voiceId: target.voiceId, speed: target.speed, minIntervalMs: config.minIntervalMs });
         })();
       await invoke("storeMediaFile", { filename: target.filename, data: clip.audioBase64 });
+      noteYoudaoNormalization(clip, warnings);
       generatedCharacters += clip.usageCharacters ?? 0;
     }
     updates[target.field] = target.filename;

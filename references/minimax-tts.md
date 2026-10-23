@@ -10,6 +10,14 @@
 provider 与口音都写进内容寻址的文件名（`youdao-uk-…` / `youdao-us-…` / `minimax-…`），所以换来源会重录，
 不会误当成"已存在"而复用旧音频。抓来的音频自用可以，**不要公开分发**。
 
+**入库前一律过一遍响度归一**（`normalizeLoudness`，EBU R128 单遍 loudnorm，目标 −16 LUFS / −1.5 dBTP）。
+原因：词典录音本身参差不齐，而且比 MiniMax 例句轻一截——实测有道 30 个词是 −18.4 ~ −23.6 LUFS
+（均值 −21.6，真峰值 ≈ −7.8 dBTP），MiniMax 例句是 −15.8 ~ −17.7（均值 −16.9，真峰值 ≈ −1.2 dBTP），
+差约 4.7 dB，同一台手机上点单词和点例句就会觉得单词明显小声。归一后实测 −16.4 ~ −16.8，跟例句齐平。
+处理版本记在 `YOUDAO_MODEL`（`youdao-dictvoice-l16`）里，也就是写进了文件名指纹：换这一版会让旧的
+**原样**音频被判为过期并重录，不会悄悄留着小声的那份。本机没有 ffmpeg 时不报错，原样入库并在
+`warnings` 里说明这批词音没归一。走临时文件而不是 `pipe:0`/`pipe:1`：后者在本机上会卡死。
+
 # MiniMax TTS
 
 Use only for an authorized import that needs stored Anki audio. This is an import-time operation,

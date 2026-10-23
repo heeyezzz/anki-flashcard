@@ -420,6 +420,22 @@ check_absent "兜底提示只在该报时报"         "sense_ambiguous.json|UNDE
 check "搭配窗口取目标词两侧各两词"  '…brother was [skinny] as a…'  node -e "import('$S/scripts/note-rules.mjs').then(m => console.log(m.collocationWindow('Her brother was skinny as a boy, although he ate all day.', 'skinny')))"
 check "dry-run 预览带搭配与义项"  '"collocation"'  node "$S/scripts/import-vocabulary.mjs" "$T/ok.json" --dry-run --without-tts
 
+echo "== 10d. 词音响度（有道录音入库前拉到例句水位）=="
+LOUD=$(node "$S/tests/loudness-check.mjs" 2>&1)
+case "$LOUD" in
+  SKIP*) echo "SKIP  词音响度归一（$LOUD）";;
+  *PASS*) echo "PASS  词音响度归一落在例句水位";;
+  *)      echo "FAIL  词音响度归一：$(tail -2 <<<"$LOUD")"; fail=$((fail+1));;
+esac
+# 文件名指纹含 model：不换标识，卡上就会继续复用没归一的那份。
+check "换了处理版本后词音文件名必然不同" "DIFFERENT" node -e "
+import('$S/scripts/youdao-tts.mjs').then(async (y) => {
+  const m = await import('$S/scripts/minimax-tts.mjs');
+  const src = y.wordAudioSource('youdao', {});
+  const name = (model) => m.createMediaFilename({ word: 'spite', slot: 'word', text: 'spite', model, voiceId: src.voiceId, speed: src.speed, prefix: src.prefix });
+  console.log(name(src.model) === name('youdao-dictvoice') ? 'SAME' : 'DIFFERENT');
+});"
+
 echo "== 10. 模板不变量（共用函数一致 / 无死 CSS / 音频独占）=="
 check "template invariants all hold" "模板不变量全部通过" node "$S/tests/template-invariants.mjs"
 
