@@ -203,7 +203,10 @@ call("updateNoteFields", {"note": {"id": note["noteId"], "fields": {"Sentence3":
 print(f"fixture note {note['noteId']}: Sentence3 -> {edited!r} (audio now stale)")
 PY
 check "stale audio is planned for regeneration" '"field": "AudioSentence3"' node "$S/scripts/add-audio-to-existing.mjs" --deck "$FIXTURE_DECK" --word "incur" --refresh --minimax-voice "English_Steady_Female_1" --dry-run
-check "regenerates the edited sentence"        '"completed"'        node "$S/scripts/add-audio-to-existing.mjs" --deck "$FIXTURE_DECK" --word "incur" --refresh --minimax-voice "English_Steady_Female_1"
+check "refresh 报出会被换下的旧音频"          '"wouldDelete"'      node "$S/scripts/add-audio-to-existing.mjs" --deck "$FIXTURE_DECK" --word "incur" --refresh --minimax-voice "English_Steady_Female_1" --dry-run
+REFRESH_OUT="$(node "$S/scripts/add-audio-to-existing.mjs" --deck "$FIXTURE_DECK" --word "incur" --refresh --minimax-voice "English_Steady_Female_1" 2>&1)"
+check "regenerates the edited sentence"        '"completed"'    printf '%s' "$REFRESH_OUT"
+check "换下的旧音频被删掉并报告"               '"mediaDeleted"' printf '%s' "$REFRESH_OUT"
 
 echo "== 6b. rewrite-existing planning (read-only) =="
 # 从真实夹具卡导出当前内容当改写输入：计划必须是「零改动 + 全部复用语音」——这才是幂等的断言。

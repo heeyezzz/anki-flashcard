@@ -81,6 +81,11 @@ if (!notes.length) throw new Error(`No ${MODEL_NAME} notes found in deck: ${conf
 if (config.word && notes.length !== 1) throw new Error(`Expected exactly one ${config.word} note in ${config.deckName}, found ${notes.length}.`);
 
 const warnings = [];
+// 音频字段可能存裸文件名，也可能存 [sound:…]，比较前先统一成文件名。
+const mediaName = (value) => {
+  const match = /\[sound:([^\]]+)\]/.exec(String(value || ""));
+  return match ? match[1] : String(value || "").trim();
+};
 const plan = [];
 for (const note of notes) {
   const word = note.fields.Word.value.trim();
@@ -116,10 +121,18 @@ for (const entry of todo) {
 }
 
 if (config.dryRun) {
+  const replaced = [];
+  for (const entry of todo) {
+    for (const target of entry.targets) {
+      if (target.needed && target.stored && target.stored !== target.filename) {
+        replaced.push({ word: entry.word, field: target.field, wouldDelete: target.stored });
+      }
+    }
+  }
   console.log(JSON.stringify({
     dryRun: true, modelName: MODEL_NAME, deckName: config.deckName,
     notesInDeck: notes.length, notesNeedingAudio: todo.length,
-    planned: plannedNew, warnings
+    planned: plannedNew, replacedAudio: replaced, warnings
   }, null, 2));
   process.exit(0);
 }
@@ -130,6 +143,7 @@ if (!todo.length) {
 
 let apiKey = "";
 let generatedCharacters = 0;
+const replacedMedia = new Map();
 for (const entry of todo) {
   const updates = Object.fromEntries(AUDIO_FIELDS.map((field) => [field, ""]));
   for (const target of entry.targets) {
@@ -146,8 +160,27 @@ for (const entry of todo) {
       generatedCharacters += clip.usageCharacters ?? 0;
     }
     updates[target.field] = target.filename;
+    if (target.stored && target.stored !== target.filename) {
+      replacedMedia.set(target.stored, `${entry.word}.${target.field}`);
+    }
   }
   await invoke("updateNoteFields", { note: { id: entry.noteId, fields: updates } });
+}
+
+// 换下来的旧音频：只有整个笔记类型里再没有别的卡引用它才删，否则留着并报出来。
+const mediaDeleted = [];
+if (replacedMedia.size) {
+  const rewritten = new Set(todo.map((entry) => entry.noteId));
+  const otherIds = (await invoke("findNotes", { query: `note:"${MODEL_NAME}"` })).filter((id) => !rewritten.has(id));
+  const otherNotes = otherIds.length ? await invoke("notesInfo", { notes: otherIds }) : [];
+  for (const [name, usedBy] of replacedMedia) {
+    if (otherNotes.some((note) => Object.values(note.fields).some((field) => mediaName(field.value) === name))) {
+      warnings.push(`${name} 仍被别的笔记引用，保留（本次由 ${usedBy} 换下）`);
+      continue;
+    }
+    await invoke("deleteMediaFile", { filename: name });
+    mediaDeleted.push(name);
+  }
 }
 
 const verified = await invoke("notesInfo", { notes: todo.map((entry) => entry.noteId) });
@@ -167,5 +200,5 @@ for (const note of verified) {
 console.log(JSON.stringify({
   deckName: config.deckName, modelName: MODEL_NAME,
   completed: verified.map((note) => ({ noteId: note.noteId, word: note.fields.Word.value })),
-  newlyGeneratedCharacters: generatedCharacters, warnings
+  newlyGeneratedCharacters: generatedCharacters, mediaDeleted, warnings
 }, null, 2));
